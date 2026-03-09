@@ -38,9 +38,18 @@ export function calculateCostEstimates(
       monthlyCost: costPerRequest * monthlyRequests,
       inputPricePer1M: model.inputPricePer1M,
       outputPricePer1M: model.outputPricePer1M,
+      contextWindow: model.contextWindow,
+      maxOutputTokens: model.maxOutputTokens,
       isPopular: model.isPopular,
       isFlagship: model.isFlagship,
       isReasoning: model.isReasoning,
+      isCoding: model.isCoding,
+      supportsVision: model.supportsVision,
+      supportsFunctionCalling: model.supportsFunctionCalling,
+      supportsStreaming: model.supportsStreaming,
+      supportsJSON: model.supportsJSON,
+      isMultimodal: model.isMultimodal,
+      description: model.description,
     }
   })
 }

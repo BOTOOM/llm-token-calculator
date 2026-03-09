@@ -16,9 +16,13 @@ const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 export function Calculator() {
   const [inputText, setInputText] = useState('')
+  const [inputTokensManual, setInputTokensManual] = useState(1000)
+  const [inputMode, setInputMode] = useState<'text' | 'number'>('text')
+  
   const [outputText, setOutputText] = useState('')
   const [outputTokensManual, setOutputTokensManual] = useState(500)
   const [outputMode, setOutputMode] = useState<'text' | 'number'>('number')
+  
   const [isCalculating, setIsCalculating] = useState(false)
   
   const [usage, setUsage] = useState<UsageProjection>({
@@ -46,9 +50,21 @@ export function Calculator() {
 
   // Real token counting with debounce
   const calculateRealTokens = useCallback(() => {
-    if (!inputText && !outputText) {
+    if (inputMode === 'number' && outputMode === 'number') {
+      // Both modes are manual, no need to calculate
       setInputTokenCounts([])
       setOutputTokenCount(0)
+      setIsCalculating(false)
+      return
+    }
+
+    const hasInputText = inputMode === 'text' && inputText
+    const hasOutputText = outputMode === 'text' && outputText
+
+    if (!hasInputText && !hasOutputText) {
+      setInputTokenCounts([])
+      setOutputTokenCount(0)
+      setIsCalculating(false)
       return
     }
 
@@ -63,25 +79,26 @@ export function Calculator() {
         { provider: 'Mistral', displayName: 'Mistral' },
       ]
 
-      const counts = providers.map((p) => {
-        const result = countTokens(inputText, p.provider)
-        return {
-          ...p,
-          tokens: result.tokens,
-          isEstimate: result.isEstimate,
-        }
-      })
+      if (hasInputText) {
+        const counts = providers.map((p) => {
+          const result = countTokens(inputText, p.provider)
+          return {
+            ...p,
+            tokens: result.tokens,
+            isEstimate: result.isEstimate,
+          }
+        })
+        setInputTokenCounts(counts)
+      }
 
-      setInputTokenCounts(counts)
-
-      if (outputMode === 'text' && outputText) {
+      if (hasOutputText) {
         const outputResult = countTokens(outputText, 'OpenAI')
         setOutputTokenCount(outputResult.tokens)
       }
 
       setIsCalculating(false)
     }, 100)
-  }, [inputText, outputText, outputMode])
+  }, [inputText, outputText, inputMode, outputMode])
 
   // Debounced real calculation
   useEffect(() => {
@@ -89,13 +106,24 @@ export function Calculator() {
     return () => clearTimeout(timer)
   }, [calculateRealTokens])
 
+  // Get the effective input tokens (from text or manual input)
+  const effectiveInputTokens = useMemo(() => {
+    if (inputMode === 'number') {
+      return inputTokensManual
+    }
+    if (inputTokenCounts.length > 0) {
+      return Math.round(inputTokenCounts.reduce((sum, t) => sum + t.tokens, 0) / inputTokenCounts.length)
+    }
+    return quickInputEstimate
+  }, [inputMode, inputTokensManual, inputTokenCounts, quickInputEstimate])
+
   // Get the effective output tokens (from text or manual input)
   const effectiveOutputTokens = useMemo(() => {
-    if (outputMode === 'text') {
-      return outputTokenCount || quickOutputEstimate
+    if (outputMode === 'number') {
+      return outputTokensManual
     }
-    return outputTokensManual
-  }, [outputMode, outputTokenCount, quickOutputEstimate, outputTokensManual])
+    return outputTokenCount || quickOutputEstimate
+  }, [outputMode, outputTokensManual, outputTokenCount, quickOutputEstimate])
 
   // Update usage when output tokens change
   useEffect(() => {
@@ -105,16 +133,10 @@ export function Calculator() {
     }))
   }, [effectiveOutputTokens])
 
-  // Get average input tokens for cost calculation
-  const avgInputTokens = useMemo(() => {
-    if (inputTokenCounts.length === 0) return quickInputEstimate
-    return Math.round(inputTokenCounts.reduce((sum, t) => sum + t.tokens, 0) / inputTokenCounts.length)
-  }, [inputTokenCounts, quickInputEstimate])
-
   // Calculate cost estimates for all models
   const costEstimates = useMemo(() => {
-    return calculateCostEstimates(avgInputTokens, effectiveOutputTokens, models, usage)
-  }, [avgInputTokens, effectiveOutputTokens, models, usage])
+    return calculateCostEstimates(effectiveInputTokens, effectiveOutputTokens, models, usage)
+  }, [effectiveInputTokens, effectiveOutputTokens, models, usage])
 
   // Find cheapest and most expensive models
   const cheapestModel = useMemo(() => findCheapestModel(costEstimates), [costEstimates])
@@ -125,6 +147,13 @@ export function Calculator() {
 
   // Token count cards with loading state
   const tokenCountsForCards = useMemo(() => {
+    // If input mode is manual, show the manual count
+    if (inputMode === 'number') {
+      return [
+        { provider: 'Manual', displayName: 'Manual Input', tokens: inputTokensManual, isLoading: false, isEstimate: false, color: 'cyan' },
+      ]
+    }
+
     if (inputTokenCounts.length > 0) {
       return inputTokenCounts.map(t => ({
         provider: t.provider,
@@ -139,13 +168,17 @@ export function Calculator() {
     }
     
     // Show quick estimates while calculating
-    return [
-      { provider: 'OpenAI', displayName: 'OpenAI (Tiktoken)', tokens: quickInputEstimate, isLoading: isCalculating, isEstimate: true, color: 'emerald' },
-      { provider: 'Anthropic', displayName: 'Anthropic (Claude)', tokens: Math.round(quickInputEstimate * 0.95), isLoading: isCalculating, isEstimate: true, color: 'amber' },
-      { provider: 'Google', displayName: 'Google (Gemini)', tokens: Math.round(quickInputEstimate * 1.05), isLoading: isCalculating, isEstimate: true, color: 'blue' },
-      { provider: 'Mistral', displayName: 'Mistral', tokens: quickInputEstimate, isLoading: isCalculating, isEstimate: true, color: 'orange' },
-    ]
-  }, [inputTokenCounts, quickInputEstimate, isCalculating])
+    if (inputText) {
+      return [
+        { provider: 'OpenAI', displayName: 'OpenAI (Tiktoken)', tokens: quickInputEstimate, isLoading: isCalculating, isEstimate: true, color: 'emerald' },
+        { provider: 'Anthropic', displayName: 'Anthropic (Claude)', tokens: Math.round(quickInputEstimate * 0.95), isLoading: isCalculating, isEstimate: true, color: 'amber' },
+        { provider: 'Google', displayName: 'Google (Gemini)', tokens: Math.round(quickInputEstimate * 1.05), isLoading: isCalculating, isEstimate: true, color: 'blue' },
+        { provider: 'Mistral', displayName: 'Mistral', tokens: quickInputEstimate, isLoading: isCalculating, isEstimate: true, color: 'orange' },
+      ]
+    }
+
+    return []
+  }, [inputMode, inputTokensManual, inputTokenCounts, quickInputEstimate, isCalculating, inputText])
 
   return (
     <section id="calculator" className="py-16">
@@ -156,21 +189,27 @@ export function Calculator() {
             <TokenInput
               inputText={inputText}
               onInputChange={setInputText}
+              inputTokens={inputTokensManual}
+              onInputTokensChange={setInputTokensManual}
+              inputMode={inputMode}
+              onInputModeChange={setInputMode}
               outputText={outputText}
               onOutputChange={setOutputText}
               outputTokens={outputTokensManual}
               onOutputTokensChange={setOutputTokensManual}
               outputMode={outputMode}
               onOutputModeChange={setOutputMode}
-              inputTokenCount={avgInputTokens}
+              inputTokenCount={effectiveInputTokens}
               outputTokenCount={outputTokenCount || quickOutputEstimate}
               isCalculating={isCalculating}
             />
             
             {/* Token count cards */}
-            <div className="mt-6">
-              <TokenCountCards counts={tokenCountsForCards} />
-            </div>
+            {tokenCountsForCards.length > 0 && (
+              <div className="mt-6">
+                <TokenCountCards counts={tokenCountsForCards} />
+              </div>
+            )}
           </div>
 
           {/* Sidebar with projections and recommendation */}
@@ -178,7 +217,7 @@ export function Calculator() {
             <UsageProjections
               usage={usage}
               onChange={setUsage}
-              inputTokens={avgInputTokens}
+              inputTokens={effectiveInputTokens}
               outputMode={outputMode}
             />
             <CheapestOption

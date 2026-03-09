@@ -1,4 +1,4 @@
-import { Calculator, Heart, Github, Coffee } from 'lucide-react'
+import { Calculator, Heart, Github, Coffee, ShieldCheck } from 'lucide-react'
 
 const GITHUB_REPO = 'https://github.com/BOTOOM/llm-token-calculator'
 
@@ -33,6 +33,18 @@ export function Footer() {
               <Coffee className="h-4 w-4" />
               Buy Me a Coffee
             </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Privacy Notice */}
+      <div className="border-b border-zinc-800 py-6">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center gap-3 text-center">
+            <ShieldCheck className="h-5 w-5 text-emerald-400" />
+            <p className="text-sm text-zinc-400">
+              <span className="font-medium text-emerald-400">100% Private:</span> All calculations happen locally in your browser. We never send, store, or log any of your text data.
+            </p>
           </div>
         </div>
       </div>

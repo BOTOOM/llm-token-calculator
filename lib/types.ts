@@ -1,4 +1,14 @@
-export interface ModelPrice {
+export interface ModelCapabilities {
+  supportsVision?: boolean
+  supportsFunctionCalling?: boolean
+  supportsStreaming?: boolean
+  supportsJSON?: boolean
+  isReasoning?: boolean
+  isCoding?: boolean
+  isMultimodal?: boolean
+}
+
+export interface ModelPrice extends ModelCapabilities {
   provider: string
   model: string
   displayName: string
@@ -9,9 +19,7 @@ export interface ModelPrice {
   maxOutputTokens?: number
   isPopular?: boolean
   isFlagship?: boolean
-  isReasoning?: boolean
-  supportsVision?: boolean
-  supportsFunctionCalling?: boolean
+  description?: string
 }
 
 export interface TokenCount {
@@ -22,7 +30,7 @@ export interface TokenCount {
   isEstimate?: boolean
 }
 
-export interface CostEstimate {
+export interface CostEstimate extends ModelCapabilities {
   provider: string
   model: string
   displayName: string
@@ -33,9 +41,11 @@ export interface CostEstimate {
   monthlyCost: number
   inputPricePer1M: number
   outputPricePer1M: number
+  contextWindow?: number
+  maxOutputTokens?: number
   isPopular?: boolean
   isFlagship?: boolean
-  isReasoning?: boolean
+  description?: string
 }
 
 export interface UsageProjection {
@@ -49,8 +59,42 @@ export interface TokenInputMode {
   value: string | number
 }
 
-export type SortField = 'model' | 'provider' | 'inputPricePer1M' | 'outputPricePer1M' | 'costPerRequest' | 'monthlyCost'
+export type SortField = 'model' | 'provider' | 'inputPricePer1M' | 'outputPricePer1M' | 'costPerRequest' | 'monthlyCost' | 'contextWindow'
 export type SortDirection = 'asc' | 'desc'
+
+export type CapabilityFilter = 
+  | 'supportsVision'
+  | 'supportsFunctionCalling'
+  | 'supportsStreaming'
+  | 'supportsJSON'
+  | 'isReasoning'
+  | 'isCoding'
+  | 'isMultimodal'
+
+export interface ContextWindowFilter {
+  min?: number
+  max?: number
+  label: string
+}
+
+export const CONTEXT_WINDOW_FILTERS: ContextWindowFilter[] = [
+  { label: 'All Sizes' },
+  { min: 0, max: 32000, label: '< 32K' },
+  { min: 32000, max: 128000, label: '32K - 128K' },
+  { min: 128000, max: 256000, label: '128K - 256K' },
+  { min: 256000, max: 1000000, label: '256K - 1M' },
+  { min: 1000000, label: '> 1M' },
+]
+
+export const CAPABILITY_LABELS: Record<CapabilityFilter, { label: string; description: string }> = {
+  supportsVision: { label: 'Vision', description: 'Can analyze images and visual content' },
+  supportsFunctionCalling: { label: 'Functions', description: 'Supports function/tool calling' },
+  supportsStreaming: { label: 'Streaming', description: 'Supports streaming responses' },
+  supportsJSON: { label: 'JSON Mode', description: 'Native JSON output mode' },
+  isReasoning: { label: 'Reasoning', description: 'Enhanced reasoning capabilities (Chain of Thought)' },
+  isCoding: { label: 'Coding', description: 'Optimized for code generation' },
+  isMultimodal: { label: 'Multimodal', description: 'Supports multiple input/output modalities' },
+}
 
 // LiteLLM API response types
 export interface LiteLLMModelData {

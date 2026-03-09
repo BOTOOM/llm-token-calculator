@@ -1,9 +1,8 @@
-# Tokonomics
+# TokenBudget
 
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink)](https://github.com/sponsors/BOTOOM)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/edwardiazdev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0-black)](https://v0.app)
 
 A powerful token counter and cost calculator for LLM APIs. Compare pricing across OpenAI, Anthropic, Google, Mistral, AWS Bedrock, Qwen, and more.
 
@@ -97,10 +96,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Links
 
-- [Live Demo](https://tokonomics.dev)
+- [Live Demo](https://tokenbudget.edwardiaz.dev)
 - [GitHub Repository](https://github.com/BOTOOM/llm-token-calculator)
 - [Report Issues](https://github.com/BOTOOM/llm-token-calculator/issues)
 
 ---
 
-Built with [v0](https://v0.app) | Pricing data from [LiteLLM](https://github.com/BerriAI/litellm)
+Pricing data from [LiteLLM](https://github.com/BerriAI/litellm)

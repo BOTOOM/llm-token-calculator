@@ -1,13 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="8" fill="url(#grad)"/>
-  <path d="M8 10h4v12H8V10z" fill="white" opacity="0.9"/>
-  <path d="M14 10h4v12h-4V10z" fill="white" opacity="0.7"/>
-  <path d="M20 10h4v8h-4v-8z" fill="white" opacity="0.5"/>
-  <path d="M8 23h16v1H8v-1z" fill="white" opacity="0.4"/>
+  <rect width="32" height="32" rx="7" fill="url(#bg-grad)"/>
+  <!-- T letter stylized as tokens/coins -->
+  <path d="M8 8h16v3H8z" fill="white" opacity="0.95"/>
+  <path d="M14 11h4v13h-4z" fill="white" opacity="0.95"/>
+  <!-- Budget indicator dots -->
+  <circle cx="10" cy="20" r="2" fill="white" opacity="0.6"/>
+  <circle cx="22" cy="20" r="2" fill="white" opacity="0.6"/>
+  <circle cx="10" cy="14" r="1.5" fill="white" opacity="0.4"/>
+  <circle cx="22" cy="14" r="1.5" fill="white" opacity="0.4"/>
 </svg>

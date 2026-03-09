@@ -22,14 +22,18 @@ const colorClasses: Record<string, { dot: string; badge: string }> = {
   orange: { dot: 'bg-orange-500', badge: 'bg-orange-500/10 text-orange-600 dark:text-orange-400' },
   amber: { dot: 'bg-amber-500', badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
   purple: { dot: 'bg-purple-500', badge: 'bg-purple-500/10 text-purple-600 dark:text-purple-400' },
+  cyan: { dot: 'bg-cyan-500', badge: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' },
+  rose: { dot: 'bg-rose-500', badge: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' },
 }
+
+const defaultColor = colorClasses.emerald
 
 export function TokenCountCards({ counts }: TokenCountCardsProps) {
   if (counts.every(c => c.tokens === 0)) {
     return (
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {counts.map((count) => {
-          const colors = colorClasses[count.color || 'emerald']
+          const colors = colorClasses[count.color || 'emerald'] || defaultColor
           return (
             <div
               key={count.provider}
@@ -53,7 +57,7 @@ export function TokenCountCards({ counts }: TokenCountCardsProps) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {counts.map((count) => {
-        const colors = colorClasses[count.color || 'emerald']
+        const colors = colorClasses[count.color || 'emerald'] || defaultColor
         return (
           <div
             key={count.provider}

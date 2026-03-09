@@ -199,7 +199,7 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
       {children}
       <ArrowUpDown className={cn(
         "ml-1.5 h-3.5 w-3.5",
-        sortField === field && "text-cyan-500"
+        sortField === field && "text-cyan-600 dark:text-cyan-400"
       )} />
     </Button>
   )
@@ -297,16 +297,16 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
             </PopoverTrigger>
             <PopoverContent 
               align="start" 
-              className="w-56 border-zinc-700 bg-zinc-900 p-2"
+              className="w-56 p-2"
               onInteractOutside={() => setProviderFilterOpen(false)}
             >
               <div className="mb-2 flex items-center justify-between px-2">
-                <span className="text-xs font-medium text-zinc-400">Filter by provider</span>
+                <span className="text-xs font-medium text-muted-foreground">Filter by provider</span>
                 {selectedProviders.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs text-zinc-400"
+                    className="h-6 px-2 text-xs text-muted-foreground"
                     onClick={() => setSelectedProviders([])}
                   >
                     Clear
@@ -317,14 +317,14 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                 {providers.map((provider) => (
                   <label
                     key={provider}
-                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-zinc-800"
+                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted"
                   >
                     <Checkbox
                       checked={selectedProviders.includes(provider)}
                       onCheckedChange={() => toggleProvider(provider)}
-                      className="border-zinc-600 data-[state=checked]:border-cyan-500 data-[state=checked]:bg-cyan-500"
+                      className="data-[state=checked]:border-cyan-500 data-[state=checked]:bg-cyan-500"
                     />
-                    <span className="text-sm text-zinc-300">{provider}</span>
+                    <span className="text-sm">{provider}</span>
                   </label>
                 ))}
               </div>
@@ -338,14 +338,13 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "border-zinc-700 bg-zinc-800/50 text-zinc-300",
-                  selectedCapabilities.length > 0 && "border-cyan-500/50 bg-cyan-500/10 text-cyan-300"
+                  selectedCapabilities.length > 0 && "border-cyan-500/50 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
                 )}
               >
                 <Layers className="mr-2 h-3.5 w-3.5" />
                 Capabilities
                 {selectedCapabilities.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 bg-cyan-500/20 text-cyan-300">
+                  <Badge variant="secondary" className="ml-2 bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
                     {selectedCapabilities.length}
                   </Badge>
                 )}
@@ -354,16 +353,16 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
             </PopoverTrigger>
             <PopoverContent 
               align="start" 
-              className="w-64 border-zinc-700 bg-zinc-900 p-2"
+              className="w-64 p-2"
               onInteractOutside={() => setCapabilityFilterOpen(false)}
             >
               <div className="mb-2 flex items-center justify-between px-2">
-                <span className="text-xs font-medium text-zinc-400">Filter by capability</span>
+                <span className="text-xs font-medium text-muted-foreground">Filter by capability</span>
                 {selectedCapabilities.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs text-zinc-400"
+                    className="h-6 px-2 text-xs text-muted-foreground"
                     onClick={() => setSelectedCapabilities([])}
                   >
                     Clear
@@ -374,14 +373,14 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                 {(Object.keys(CAPABILITY_LABELS) as CapabilityFilter[]).map((cap) => (
                   <label
                     key={cap}
-                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-zinc-800"
+                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted"
                   >
                     <Checkbox
                       checked={selectedCapabilities.includes(cap)}
                       onCheckedChange={() => toggleCapability(cap)}
-                      className="border-zinc-600 data-[state=checked]:border-cyan-500 data-[state=checked]:bg-cyan-500"
+                      className="data-[state=checked]:border-cyan-500 data-[state=checked]:bg-cyan-500"
                     />
-                    <div className="flex items-center gap-2 text-sm text-zinc-300">
+                    <div className="flex items-center gap-2 text-sm">
                       {CAPABILITY_ICONS[cap]}
                       <span>{CAPABILITY_LABELS[cap].label}</span>
                     </div>
@@ -398,8 +397,7 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "border-zinc-700 bg-zinc-800/50 text-zinc-300",
-                  selectedContextFilter.min !== undefined && "border-cyan-500/50 bg-cyan-500/10 text-cyan-300"
+                  selectedContextFilter.min !== undefined && "border-cyan-500/50 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
                 )}
               >
                 <Database className="mr-2 h-3.5 w-3.5" />
@@ -409,11 +407,11 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
             </PopoverTrigger>
             <PopoverContent 
               align="start" 
-              className="w-48 border-zinc-700 bg-zinc-900 p-2"
+              className="w-48 p-2"
               onInteractOutside={() => setContextFilterOpen(false)}
             >
               <div className="mb-2 px-2">
-                <span className="text-xs font-medium text-zinc-400">Context window size</span>
+                <span className="text-xs font-medium text-muted-foreground">Context window size</span>
               </div>
               <div className="space-y-1">
                 {CONTEXT_WINDOW_FILTERS.map((filter, idx) => (
@@ -424,8 +422,8 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                       setContextFilterOpen(false)
                     }}
                     className={cn(
-                      "flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-zinc-300 hover:bg-zinc-800",
-                      selectedContextFilter.label === filter.label && "bg-cyan-500/10 text-cyan-300"
+                      "flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted",
+                      selectedContextFilter.label === filter.label && "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
                     )}
                   >
                     {filter.label}
@@ -439,7 +437,6 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
           <Button
             variant="outline"
             size="sm"
-            className="border-zinc-700 bg-zinc-800/50 text-zinc-300"
             onClick={() => handleSort('monthlyCost')}
           >
             <ArrowUpDown className="mr-2 h-3.5 w-3.5" />
@@ -451,7 +448,7 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-zinc-800 hover:bg-transparent">
+            <TableRow className="border-border hover:bg-transparent">
               <TableHead className="w-[260px]">
                 <SortButton field="model">Model</SortButton>
               </TableHead>
@@ -478,7 +475,7 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
           <TableBody>
             {sortedEstimates.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-zinc-500">
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                   No models match the current filters.
                 </TableCell>
               </TableRow>
@@ -489,18 +486,18 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                   <TableRow
                     key={`${estimate.provider}-${estimate.model}`}
                     className={cn(
-                      'border-zinc-800',
+                      'border-border',
                       isCheapest && 'bg-cyan-500/5'
                     )}
                   >
-                    <TableCell className="font-medium text-white">
+                    <TableCell className="font-medium text-foreground">
                       <div className="flex flex-col">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="truncate">{estimate.displayName}</span>
                           {estimate.isFlagship && (
                             <Badge
                               variant="outline"
-                              className="border-blue-500/30 bg-blue-500/10 text-[10px] text-blue-400"
+                              className="border-blue-500/30 bg-blue-500/10 text-[10px] text-blue-600 dark:text-blue-400"
                             >
                               Flagship
                             </Badge>
@@ -508,7 +505,7 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                           {estimate.isPopular && (
                             <Badge
                               variant="outline"
-                              className="border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-400"
+                              className="border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600 dark:text-emerald-400"
                             >
                               Popular
                             </Badge>
@@ -517,9 +514,9 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                             <TooltipProvider delayDuration={200}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Info className="h-3.5 w-3.5 cursor-help text-zinc-500" />
+                                  <Info className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
                                 </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-xs border-zinc-700 bg-zinc-900 text-white">
+                                <TooltipContent side="top" className="max-w-xs">
                                   <p className="text-sm">{estimate.description}</p>
                                 </TooltipContent>
                               </Tooltip>
@@ -529,19 +526,19 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                         <ModelCapabilityBadges estimate={estimate} />
                       </div>
                     </TableCell>
-                    <TableCell className="text-zinc-400">{estimate.provider}</TableCell>
-                    <TableCell className="text-right tabular-nums text-zinc-300">
+                    <TableCell className="text-muted-foreground">{estimate.provider}</TableCell>
+                    <TableCell className="text-right tabular-nums">
                       <TooltipProvider delayDuration={200}>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="cursor-help">{formatContextWindow(estimate.contextWindow)}</span>
                           </TooltipTrigger>
-                          <TooltipContent side="top" className="border-zinc-700 bg-zinc-900 text-white">
+                          <TooltipContent side="top">
                             <p className="text-sm">
                               {estimate.contextWindow?.toLocaleString() || 'Unknown'} tokens
                             </p>
                             {estimate.maxOutputTokens && (
-                              <p className="text-xs text-zinc-400">
+                              <p className="text-xs text-muted-foreground">
                                 Max output: {estimate.maxOutputTokens.toLocaleString()} tokens
                               </p>
                             )}
@@ -549,19 +546,19 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                         </Tooltip>
                       </TooltipProvider>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-zinc-300">
+                    <TableCell className="text-right tabular-nums">
                       {formatPricePer1M(estimate.inputPricePer1M)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-zinc-300">
+                    <TableCell className="text-right tabular-nums">
                       {formatPricePer1M(estimate.outputPricePer1M)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-zinc-300">
+                    <TableCell className="text-right tabular-nums">
                       {formatCurrency(estimate.costPerRequest)}
                     </TableCell>
                     <TableCell
                       className={cn(
                         'text-right tabular-nums font-semibold',
-                        isCheapest ? 'text-cyan-400' : 'text-white'
+                        isCheapest ? 'text-cyan-600 dark:text-cyan-400' : 'text-foreground'
                       )}
                     >
                       {formatCurrency(estimate.monthlyCost)}
@@ -574,7 +571,7 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
         </Table>
       </div>
       
-      <div className="border-t border-zinc-800 px-4 py-3 text-xs text-zinc-500">
+      <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
         Showing {sortedEstimates.length} of {estimates.length} models
         {priceSource === 'LiteLLM' && (
           <span className="ml-2">
@@ -583,7 +580,7 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
               href="https://github.com/BerriAI/litellm" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-cyan-400 hover:underline"
+              className="text-cyan-600 hover:underline dark:text-cyan-400"
             >
               LiteLLM
             </a>

@@ -1,3 +1,5 @@
+'use client'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Sparkles, Github, Heart } from 'lucide-react'
@@ -7,11 +9,11 @@ const GITHUB_REPO = 'https://github.com/BOTOOM/llm-token-calculator'
 export function Hero() {
   return (
     <section className="relative overflow-hidden pb-16 pt-20 md:pb-24 md:pt-32">
-      {/* Background gradient effects */}
+      {/* Background gradient effects - adaptive to theme */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-blue-500/20 blur-[120px]" />
-        <div className="absolute -right-40 top-20 h-80 w-80 rounded-full bg-cyan-500/20 blur-[120px]" />
-        <div className="absolute bottom-0 left-1/2 h-60 w-60 -translate-x-1/2 rounded-full bg-blue-400/10 blur-[100px]" />
+        <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-blue-500/10 blur-[120px] dark:bg-blue-500/20" />
+        <div className="absolute -right-40 top-20 h-80 w-80 rounded-full bg-cyan-500/10 blur-[120px] dark:bg-cyan-500/20" />
+        <div className="absolute bottom-0 left-1/2 h-60 w-60 -translate-x-1/2 rounded-full bg-blue-400/5 blur-[100px] dark:bg-blue-400/10" />
       </div>
 
       <div className="container relative mx-auto px-4">
@@ -26,7 +28,7 @@ export function Hero() {
 
           <h1 className="mb-6 text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
             <span className="text-balance">Token Counter & Cost Calculator for</span>
-            <span className="mt-2 block bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 bg-clip-text text-transparent">
+            <span className="mt-2 block bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500 bg-clip-text text-transparent dark:from-blue-500 dark:via-cyan-500 dark:to-teal-500">
               LLM APIs
             </span>
           </h1>
@@ -39,7 +41,7 @@ export function Hero() {
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button
               size="lg"
-              className="w-full bg-gradient-to-r from-blue-500 to-cyan-400 text-white hover:from-blue-600 hover:to-cyan-500 sm:w-auto"
+              className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-700 hover:to-cyan-600 dark:from-blue-500 dark:to-cyan-400 dark:hover:from-blue-600 dark:hover:to-cyan-500 sm:w-auto"
               asChild
             >
               <a href="#calculator">

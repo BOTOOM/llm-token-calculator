@@ -7,13 +7,13 @@ import './globals.css'
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://tokonomics.dev'
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://tokenbudget.edwardiaz.dev'
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Tokonomics - LLM Token Counter & Cost Calculator',
-    template: '%s | Tokonomics',
+    default: 'TokenBudget - LLM Token Counter & Cost Calculator',
+    template: '%s | TokenBudget',
   },
   description: 'Calculate and compare token costs across 50+ LLM models from OpenAI, Anthropic, Google, Mistral, AWS and more. Free, open-source, and privacy-first.',
   keywords: [
@@ -21,6 +21,7 @@ export const metadata: Metadata = {
     'tokens',
     'token counter',
     'cost calculator',
+    'token budget',
     'OpenAI',
     'GPT-4',
     'GPT-5',
@@ -33,31 +34,31 @@ export const metadata: Metadata = {
     'tiktoken',
     'tokenizer',
   ],
-  authors: [{ name: 'BOTOOM', url: 'https://github.com/BOTOOM' }],
-  creator: 'BOTOOM',
-  publisher: 'BOTOOM',
+  authors: [{ name: 'Edward Diaz', url: 'https://github.com/BOTOOM' }],
+  creator: 'Edward Diaz',
+  publisher: 'Edward Diaz',
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: BASE_URL,
-    siteName: 'Tokonomics',
-    title: 'Tokonomics - LLM Token Counter & Cost Calculator',
+    siteName: 'TokenBudget',
+    title: 'TokenBudget - LLM Token Counter & Cost Calculator',
     description: 'Calculate and compare token costs across 50+ LLM models. Free, open-source, and privacy-first.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Tokonomics - LLM Token Counter & Cost Calculator',
+        alt: 'TokenBudget - LLM Token Counter & Cost Calculator',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Tokonomics - LLM Token Counter & Cost Calculator',
+    title: 'TokenBudget - LLM Token Counter & Cost Calculator',
     description: 'Calculate and compare token costs across 50+ LLM models. Free, open-source, and privacy-first.',
     images: ['/og-image.png'],
-    creator: '@BOTOOM',
+    creator: '@edwardiazdev',
   },
   robots: {
     index: true,

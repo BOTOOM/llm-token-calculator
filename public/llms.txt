@@ -1,10 +1,10 @@
-# Tokonomics - LLM Token Counter & Cost Calculator
+# TokenBudget - LLM Token Counter & Cost Calculator
 
 > Calculate and compare token costs across all major LLM providers instantly
 
 ## Overview
 
-Tokonomics is a free, open-source tool for developers to:
+TokenBudget is a free, open-source tool for developers to:
 - Count tokens in prompts using real tokenizers (tiktoken for OpenAI)
 - Compare pricing across 50+ LLM models from OpenAI, Anthropic, Google, Mistral, AWS, Meta, and more
 - Estimate monthly API costs based on usage projections
@@ -40,17 +40,18 @@ Tokonomics is a free, open-source tool for developers to:
 
 ## Technical Details
 
-- Built with Next.js 15 and React 19
+- Built with Next.js 16 and React 19
 - Uses js-tiktoken for OpenAI tokenization
 - Pricing data from LiteLLM (updated hourly)
 - Fully responsive, works on mobile
 
 ## Links
 
-- Website: https://tokonomics.dev
+- Website: https://tokenbudget.edwardiaz.dev
 - GitHub: https://github.com/BOTOOM/llm-token-calculator
 - Sponsor: https://github.com/sponsors/BOTOOM
 
 ## Contact
 
 - GitHub Issues: https://github.com/BOTOOM/llm-token-calculator/issues
+- Author: Edward Diaz (@edwardiazdev)

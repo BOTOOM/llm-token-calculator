@@ -16,16 +16,18 @@ function Logo({ className }: { className?: string }) {
       className={className}
     >
       <defs>
-        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 1 }} />
+        <linearGradient id="nav-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{ stopColor: '#10b981', stopOpacity: 1 }} />
           <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 1 }} />
         </linearGradient>
       </defs>
-      <rect width="32" height="32" rx="8" fill="url(#logo-grad)"/>
-      <path d="M8 10h4v12H8V10z" fill="white" opacity="0.9"/>
-      <path d="M14 10h4v12h-4V10z" fill="white" opacity="0.7"/>
-      <path d="M20 10h4v8h-4v-8z" fill="white" opacity="0.5"/>
-      <path d="M8 23h16v1H8v-1z" fill="white" opacity="0.4"/>
+      <rect width="32" height="32" rx="7" fill="url(#nav-logo-grad)"/>
+      <path d="M8 8h16v3H8z" fill="white" opacity="0.95"/>
+      <path d="M14 11h4v13h-4z" fill="white" opacity="0.95"/>
+      <circle cx="10" cy="20" r="2" fill="white" opacity="0.6"/>
+      <circle cx="22" cy="20" r="2" fill="white" opacity="0.6"/>
+      <circle cx="10" cy="14" r="1.5" fill="white" opacity="0.4"/>
+      <circle cx="22" cy="14" r="1.5" fill="white" opacity="0.4"/>
     </svg>
   )
 }
@@ -47,7 +49,7 @@ export function Navbar() {
         <a href="/" className="flex items-center gap-3">
           <Logo className="h-9 w-9" />
           <span className="text-lg font-semibold text-foreground">
-            Tokon<span className="text-cyan-500">omics</span>
+            Token<span className="text-emerald-500">Budget</span>
           </span>
         </a>
 
@@ -107,7 +109,7 @@ export function Navbar() {
           </Button>
           <ThemeToggle />
           <Button
-            className="bg-gradient-to-r from-blue-500 to-cyan-400 text-white hover:from-blue-600 hover:to-cyan-500"
+            className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:from-emerald-600 hover:to-cyan-600"
             onClick={scrollToCalculator}
           >
             Start Calculating
@@ -174,7 +176,7 @@ export function Navbar() {
               </a>
             </div>
             <Button
-              className="mt-2 w-full bg-gradient-to-r from-blue-500 to-cyan-400 text-white"
+              className="mt-2 w-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white"
               onClick={scrollToCalculator}
             >
               Start Calculating

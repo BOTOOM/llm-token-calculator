@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://tokonomics.dev'
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://tokenbudget.edwardiaz.dev'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

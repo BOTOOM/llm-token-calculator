@@ -74,8 +74,24 @@ export function HowItWorks() {
             <span className="text-zinc-300">)</span>
           </div>
           <p className="mt-4 text-sm text-zinc-400">
-            Rates are typically expressed per 1,000 tokens. Our calculator automatically applies the correct rates for each provider and multiplies by your expected usage volume.
+            Rates are typically expressed per 1 million tokens (1M). Our calculator automatically applies the correct rates for each provider and multiplies by your expected usage volume.
           </p>
+        </div>
+
+        {/* Pro Tip */}
+        <div className="mx-auto mt-8 max-w-3xl rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-500/20">
+              <Zap className="h-5 w-5 text-cyan-400" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-cyan-400">Pro Tip</h4>
+              <p className="mt-1 text-sm text-zinc-400">
+                You can paste both your input prompt AND an example output response to get accurate token counts for both. 
+                This gives you the most precise cost estimate for your specific use case.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>

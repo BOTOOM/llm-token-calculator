@@ -63,6 +63,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
   },
   {
     provider: 'OpenAI',
@@ -77,6 +78,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
   },
   {
     provider: 'OpenAI',
@@ -91,6 +93,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
     description: 'Best balance of cost and capability for most use cases',
   },
   {
@@ -118,6 +121,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
     description: 'Million token context for long documents',
   },
   {
@@ -133,6 +137,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
   },
   {
     provider: 'OpenAI',
@@ -173,6 +178,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
   },
   // OpenAI Reasoning Models
   {
@@ -229,6 +235,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     isReasoning: true,
     isFlagship: true,
     supportsFunctionCalling: true,
+    supportsStreaming: true,
     supportsJSON: true,
   },
   {
@@ -241,6 +248,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     maxOutputTokens: 100000,
     isReasoning: true,
     supportsFunctionCalling: true,
+    supportsStreaming: true,
     supportsJSON: true,
   },
   {
@@ -253,7 +261,23 @@ export const fallbackModelPrices: ModelPrice[] = [
     maxOutputTokens: 65536,
     isReasoning: true,
     supportsFunctionCalling: true,
+    supportsStreaming: true,
     supportsJSON: true,
+  },
+  // OpenAI Codex Models
+  {
+    provider: 'OpenAI',
+    model: 'codex-mini',
+    displayName: 'Codex Mini',
+    inputPricePer1M: 1.5,
+    outputPricePer1M: 6.0,
+    contextWindow: 200000,
+    maxOutputTokens: 100000,
+    isCoding: true,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    supportsJSON: true,
+    description: 'Specialized for code generation and completion',
   },
   
   // Anthropic Models
@@ -287,6 +311,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsStreaming: true,
     supportsJSON: true,
     isMultimodal: true,
+    isCoding: true,
   },
   {
     provider: 'Anthropic',
@@ -316,6 +341,24 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsStreaming: true,
     supportsJSON: true,
     isMultimodal: true,
+    isCoding: true,
+  },
+  {
+    provider: 'Anthropic',
+    model: 'claude-3.7-sonnet',
+    displayName: 'Claude 3.7 Sonnet',
+    inputPricePer1M: 3.0,
+    outputPricePer1M: 15.0,
+    contextWindow: 200000,
+    maxOutputTokens: 16000,
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    supportsJSON: true,
+    isMultimodal: true,
+    isCoding: true,
+    isReasoning: true,
+    description: 'Extended thinking with reasoning capabilities',
   },
   {
     provider: 'Anthropic',
@@ -330,6 +373,8 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
+    isCoding: true,
   },
   {
     provider: 'Anthropic',
@@ -358,6 +403,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
   },
   
   // Google Models
@@ -390,6 +436,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
     description: 'Ultra-fast with million token context',
   },
   {
@@ -420,6 +467,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
   },
   {
     provider: 'Google',
@@ -449,6 +497,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
   },
   {
     provider: 'Google',
@@ -463,6 +512,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
   },
   
   // Mistral Models
@@ -503,6 +553,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     maxOutputTokens: 8192,
     isCoding: true,
     supportsStreaming: true,
+    supportsJSON: true,
     description: 'Specialized for code generation and completion',
   },
   {
@@ -516,6 +567,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsVision: true,
     isMultimodal: true,
     supportsStreaming: true,
+    supportsJSON: true,
     description: 'Multimodal model for vision tasks',
   },
   {
@@ -527,6 +579,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     contextWindow: 128000,
     maxOutputTokens: 8192,
     supportsStreaming: true,
+    supportsJSON: true,
   },
   {
     provider: 'Mistral',
@@ -537,6 +590,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     contextWindow: 128000,
     maxOutputTokens: 8192,
     supportsStreaming: true,
+    supportsJSON: true,
   },
   
   // AWS Bedrock Nova
@@ -552,6 +606,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsVision: true,
     supportsFunctionCalling: true,
     supportsStreaming: true,
+    supportsJSON: true,
     isMultimodal: true,
     description: 'AWS flagship multimodal model',
   },
@@ -566,6 +621,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     isPopular: true,
     supportsVision: true,
     supportsStreaming: true,
+    supportsJSON: true,
     isMultimodal: true,
   },
   {
@@ -577,6 +633,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     contextWindow: 128000,
     maxOutputTokens: 5000,
     supportsStreaming: true,
+    supportsJSON: true,
   },
   {
     provider: 'AWS Bedrock',
@@ -588,6 +645,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     maxOutputTokens: 32000,
     supportsVision: true,
     supportsStreaming: true,
+    supportsJSON: true,
     isMultimodal: true,
   },
   {
@@ -602,7 +660,60 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsVision: true,
     supportsFunctionCalling: true,
     supportsStreaming: true,
+    supportsJSON: true,
     isMultimodal: true,
+  },
+  // AWS Titan Models
+  {
+    provider: 'AWS Bedrock',
+    model: 'titan-text-premier',
+    displayName: 'Titan Text Premier',
+    inputPricePer1M: 0.5,
+    outputPricePer1M: 1.5,
+    contextWindow: 32000,
+    maxOutputTokens: 8192,
+    isFlagship: true,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    supportsJSON: true,
+    description: 'AWS advanced text generation model',
+  },
+  {
+    provider: 'AWS Bedrock',
+    model: 'titan-text-express',
+    displayName: 'Titan Text Express',
+    inputPricePer1M: 0.2,
+    outputPricePer1M: 0.6,
+    contextWindow: 8000,
+    maxOutputTokens: 4096,
+    isPopular: true,
+    supportsStreaming: true,
+    supportsJSON: true,
+    description: 'Cost-effective general purpose text model',
+  },
+  {
+    provider: 'AWS Bedrock',
+    model: 'titan-text-lite',
+    displayName: 'Titan Text Lite',
+    inputPricePer1M: 0.15,
+    outputPricePer1M: 0.2,
+    contextWindow: 4000,
+    maxOutputTokens: 2048,
+    supportsStreaming: true,
+    description: 'Lightweight text model for simple tasks',
+  },
+  {
+    provider: 'AWS Bedrock',
+    model: 'titan-multimodal',
+    displayName: 'Titan Multimodal',
+    inputPricePer1M: 0.8,
+    outputPricePer1M: 0.8,
+    contextWindow: 8000,
+    maxOutputTokens: 4096,
+    supportsVision: true,
+    isMultimodal: true,
+    supportsStreaming: true,
+    description: 'Multimodal embedding and understanding',
   },
   
   // DeepSeek
@@ -618,6 +729,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isCoding: true,
     description: 'Cost-effective with strong performance',
   },
   {
@@ -645,6 +757,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     maxOutputTokens: 8192,
     isCoding: true,
     supportsStreaming: true,
+    supportsJSON: true,
     description: 'Specialized for code tasks',
   },
   
@@ -659,6 +772,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     maxOutputTokens: 16384,
     isReasoning: true,
     supportsStreaming: true,
+    supportsJSON: true,
     description: 'Reasoning-focused Qwen model',
   },
   {
@@ -696,6 +810,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     maxOutputTokens: 8192,
     isCoding: true,
     supportsStreaming: true,
+    supportsJSON: true,
     description: 'Optimized for code generation',
   },
   {
@@ -709,6 +824,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsVision: true,
     isMultimodal: true,
     supportsStreaming: true,
+    supportsJSON: true,
     description: 'Vision-language multimodal model',
   },
   
@@ -751,6 +867,7 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isCoding: true,
   },
   
   // Groq (fast inference)
@@ -807,20 +924,22 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
-    description: 'Real-time knowledge via X integration',
+    isMultimodal: true,
+    description: 'xAI flagship with real-time knowledge',
   },
   {
     provider: 'xAI',
     model: 'grok-2-mini',
     displayName: 'Grok 2 Mini',
-    inputPricePer1M: 0.5,
-    outputPricePer1M: 1.5,
+    inputPricePer1M: 2.0,
+    outputPricePer1M: 6.0,
     contextWindow: 128000,
     maxOutputTokens: 8192,
-    isPopular: true,
+    supportsVision: true,
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
+    isMultimodal: true,
   },
   
   // Cohere
@@ -836,14 +955,14 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsFunctionCalling: true,
     supportsStreaming: true,
     supportsJSON: true,
-    description: 'Enterprise-grade with RAG capabilities',
+    description: 'Enterprise-grade RAG optimized',
   },
   {
     provider: 'Cohere',
     model: 'command-r',
     displayName: 'Command R',
-    inputPricePer1M: 0.15,
-    outputPricePer1M: 0.6,
+    inputPricePer1M: 0.5,
+    outputPricePer1M: 1.5,
     contextWindow: 128000,
     maxOutputTokens: 4096,
     isPopular: true,
@@ -851,6 +970,40 @@ export const fallbackModelPrices: ModelPrice[] = [
     supportsStreaming: true,
     supportsJSON: true,
   },
+  
+  // AI21
+  {
+    provider: 'AI21',
+    model: 'jamba-1.5-large',
+    displayName: 'Jamba 1.5 Large',
+    inputPricePer1M: 2.0,
+    outputPricePer1M: 8.0,
+    contextWindow: 256000,
+    maxOutputTokens: 4096,
+    isFlagship: true,
+    supportsStreaming: true,
+    supportsJSON: true,
+    description: '256K context with hybrid architecture',
+  },
+  {
+    provider: 'AI21',
+    model: 'jamba-1.5-mini',
+    displayName: 'Jamba 1.5 Mini',
+    inputPricePer1M: 0.2,
+    outputPricePer1M: 0.4,
+    contextWindow: 256000,
+    maxOutputTokens: 4096,
+    supportsStreaming: true,
+    supportsJSON: true,
+  },
 ]
 
-export const providers = [...new Set(fallbackModelPrices.map(m => m.provider))].sort()
+// Function to get model by ID
+export function getModelById(provider: string, model: string): ModelPrice | undefined {
+  return fallbackModelPrices.find(m => m.provider === provider && m.model === model)
+}
+
+// Function to get all providers
+export function getAllProviders(): string[] {
+  return [...new Set(fallbackModelPrices.map(m => m.provider))].sort()
+}

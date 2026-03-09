@@ -18,16 +18,16 @@ export function UsageProjections({ usage, onChange, inputTokens, outputMode = 'n
   const monthlyTokens = dailyTokens * usage.monthlyActiveDays
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+    <div className="rounded-xl border border-border bg-card p-5">
       <div className="mb-5 flex items-center gap-2">
-        <TrendingUp className="h-4 w-4 text-cyan-400" />
-        <span className="text-sm font-medium text-white">Usage Projections</span>
+        <TrendingUp className="h-4 w-4 text-cyan-500" />
+        <span className="text-sm font-medium text-foreground">Usage Projections</span>
       </div>
 
       <div className="space-y-4">
         {outputMode === 'number' && (
           <div>
-            <Label className="mb-2 block text-xs uppercase tracking-wider text-zinc-500">
+            <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
               Output Tokens per Request
             </Label>
             <Input
@@ -36,19 +36,19 @@ export function UsageProjections({ usage, onChange, inputTokens, outputMode = 'n
               onChange={(e) =>
                 onChange({ ...usage, outputTokensPerRequest: Number(e.target.value) || 0 })
               }
-              className="border-zinc-700 bg-zinc-800/50 text-white"
+              className="bg-muted/30"
             />
-            <p className="mt-1 text-xs text-zinc-600">Average length of AI response</p>
+            <p className="mt-1 text-xs text-muted-foreground">Average length of AI response</p>
           </div>
         )}
 
         {outputMode === 'text' && (
           <div className="rounded-lg bg-cyan-500/5 p-3">
             <div className="flex items-start gap-2">
-              <Info className="mt-0.5 h-4 w-4 text-cyan-400" />
+              <Info className="mt-0.5 h-4 w-4 text-cyan-500" />
               <div>
-                <p className="text-xs font-medium text-cyan-400">Output from Text</p>
-                <p className="mt-0.5 text-xs text-zinc-400">
+                <p className="text-xs font-medium text-cyan-600 dark:text-cyan-400">Output from Text</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   Using {usage.outputTokensPerRequest.toLocaleString()} tokens from your pasted output text
                 </p>
               </div>
@@ -57,7 +57,7 @@ export function UsageProjections({ usage, onChange, inputTokens, outputMode = 'n
         )}
 
         <div>
-          <Label className="mb-2 block text-xs uppercase tracking-wider text-zinc-500">
+          <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
             Requests per Day
           </Label>
           <Input
@@ -66,12 +66,12 @@ export function UsageProjections({ usage, onChange, inputTokens, outputMode = 'n
             onChange={(e) =>
               onChange({ ...usage, requestsPerDay: Number(e.target.value) || 0 })
             }
-            className="border-zinc-700 bg-zinc-800/50 text-white"
+            className="bg-muted/30"
           />
         </div>
 
         <div>
-          <Label className="mb-2 block text-xs uppercase tracking-wider text-zinc-500">
+          <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">
             Monthly Active Days
           </Label>
           <Input
@@ -80,35 +80,35 @@ export function UsageProjections({ usage, onChange, inputTokens, outputMode = 'n
             onChange={(e) =>
               onChange({ ...usage, monthlyActiveDays: Number(e.target.value) || 0 })
             }
-            className="border-zinc-700 bg-zinc-800/50 text-white"
+            className="bg-muted/30"
             max={31}
           />
         </div>
 
-        <div className="border-t border-zinc-800 pt-4">
+        <div className="border-t border-border pt-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider text-zinc-500">Input Tokens</span>
-              <span className="font-medium tabular-nums text-white">{formatTokens(inputTokens)}</span>
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">Input Tokens</span>
+              <span className="font-medium tabular-nums text-foreground">{formatTokens(inputTokens)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider text-zinc-500">Output Tokens</span>
-              <span className="font-medium tabular-nums text-white">{formatTokens(usage.outputTokensPerRequest)}</span>
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">Output Tokens</span>
+              <span className="font-medium tabular-nums text-foreground">{formatTokens(usage.outputTokensPerRequest)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider text-zinc-500">Tokens/Request</span>
-              <span className="font-medium tabular-nums text-white">{formatTokens(inputTokens + usage.outputTokensPerRequest)}</span>
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">Tokens/Request</span>
+              <span className="font-medium tabular-nums text-foreground">{formatTokens(inputTokens + usage.outputTokensPerRequest)}</span>
             </div>
           </div>
           
-          <div className="mt-4 space-y-2 border-t border-zinc-800 pt-4">
+          <div className="mt-4 space-y-2 border-t border-border pt-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-400">Daily Tokens</span>
-              <span className="font-semibold tabular-nums text-white">{formatTokens(dailyTokens)}</span>
+              <span className="text-muted-foreground">Daily Tokens</span>
+              <span className="font-semibold tabular-nums text-foreground">{formatTokens(dailyTokens)}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-400">Monthly Tokens</span>
-              <span className="font-semibold tabular-nums text-cyan-400">{formatTokens(monthlyTokens)}</span>
+              <span className="text-muted-foreground">Monthly Tokens</span>
+              <span className="font-semibold tabular-nums text-cyan-600 dark:text-cyan-400">{formatTokens(monthlyTokens)}</span>
             </div>
           </div>
         </div>

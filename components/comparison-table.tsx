@@ -193,13 +193,13 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
     <Button
       variant="ghost"
       size="sm"
-      className="-ml-3 h-8 text-xs font-medium uppercase tracking-wider text-zinc-400 hover:text-white"
+      className="-ml-3 h-8 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground"
       onClick={() => handleSort(field)}
     >
       {children}
       <ArrowUpDown className={cn(
         "ml-1.5 h-3.5 w-3.5",
-        sortField === field && "text-cyan-400"
+        sortField === field && "text-cyan-500"
       )} />
     </Button>
   )
@@ -222,19 +222,19 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
           <TooltipProvider key={key} delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-zinc-800 text-zinc-400">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-muted text-muted-foreground">
                   {CAPABILITY_ICONS[key]}
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="top" className="border-zinc-700 bg-zinc-900 text-white">
+              <TooltipContent side="top">
                 <p className="font-medium">{CAPABILITY_LABELS[key].label}</p>
-                <p className="text-xs text-zinc-400">{CAPABILITY_LABELS[key].description}</p>
+                <p className="text-xs text-muted-foreground">{CAPABILITY_LABELS[key].description}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         ))}
         {activeCapabilities.length > 3 && (
-          <span className="inline-flex h-5 items-center rounded bg-zinc-800 px-1.5 text-[10px] text-zinc-400">
+          <span className="inline-flex h-5 items-center rounded bg-muted px-1.5 text-[10px] text-muted-foreground">
             +{activeCapabilities.length - 3}
           </span>
         )}
@@ -243,12 +243,12 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
   }
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
-      <div className="flex flex-col gap-4 border-b border-zinc-800 p-4">
+    <div className="rounded-xl border border-border bg-card">
+      <div className="flex flex-col gap-4 border-b border-border p-4">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h3 className="text-lg font-semibold text-white">Model Comparison Matrix</h3>
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+            <h3 className="text-lg font-semibold text-foreground">Model Comparison Matrix</h3>
+            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Database className="h-3.5 w-3.5" />
                 {priceSource === 'LiteLLM' ? 'Live pricing from LiteLLM' : 'Fallback pricing data'}
@@ -265,7 +265,7 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
               variant="ghost"
               size="sm"
               onClick={clearAllFilters}
-              className="text-zinc-400 hover:text-white"
+              className="text-muted-foreground hover:text-foreground"
             >
               <X className="mr-1.5 h-3.5 w-3.5" />
               Clear filters
@@ -282,14 +282,13 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "border-zinc-700 bg-zinc-800/50 text-zinc-300",
-                  selectedProviders.length > 0 && "border-cyan-500/50 bg-cyan-500/10 text-cyan-300"
+                  selectedProviders.length > 0 && "border-cyan-500/50 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
                 )}
               >
                 <Filter className="mr-2 h-3.5 w-3.5" />
                 Providers
                 {selectedProviders.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 bg-cyan-500/20 text-cyan-300">
+                  <Badge variant="secondary" className="ml-2 bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
                     {selectedProviders.length}
                   </Badge>
                 )}

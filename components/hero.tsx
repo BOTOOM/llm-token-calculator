@@ -18,20 +18,20 @@ export function Hero() {
         <div className="mx-auto max-w-3xl text-center">
           <Badge
             variant="outline"
-            className="mb-6 border-cyan-500/30 bg-cyan-500/10 text-cyan-400"
+            className="mb-6 border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
           >
             <Sparkles className="mr-1.5 h-3.5 w-3.5" />
             Now supporting GPT-5.4, Gemini 3.1, Claude 4.6 & more
           </Badge>
 
-          <h1 className="mb-6 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl">
+          <h1 className="mb-6 text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
             <span className="text-balance">Token Counter & Cost Calculator for</span>
-            <span className="mt-2 block bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
+            <span className="mt-2 block bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 bg-clip-text text-transparent">
               LLM APIs
             </span>
           </h1>
 
-          <p className="mx-auto mb-8 max-w-2xl text-pretty text-lg text-zinc-400 md:text-xl">
+          <p className="mx-auto mb-8 max-w-2xl text-pretty text-lg text-muted-foreground md:text-xl">
             Compare token usage and pricing across OpenAI, Anthropic, Google, Mistral, AWS Bedrock, and many more.
             Estimate project costs before you write a single line of code.
           </p>
@@ -50,7 +50,7 @@ export function Hero() {
             <Button
               size="lg"
               variant="outline"
-              className="w-full border-zinc-700 bg-transparent text-white hover:bg-zinc-800 sm:w-auto"
+              className="w-full sm:w-auto"
               asChild
             >
               <a href="#how-it-works">Learn How It Works</a>
@@ -58,28 +58,28 @@ export function Hero() {
           </div>
 
           {/* Quick Links */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-zinc-500">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
             <a
               href={GITHUB_REPO}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 transition-colors hover:text-white"
+              className="flex items-center gap-1.5 transition-colors hover:text-foreground"
             >
               <Github className="h-4 w-4" />
               Open Source
             </a>
-            <span className="text-zinc-700">|</span>
+            <span className="text-border">|</span>
             <a
               href="https://github.com/sponsors/BOTOOM"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 transition-colors hover:text-pink-400"
+              className="flex items-center gap-1.5 transition-colors hover:text-pink-500"
             >
               <Heart className="h-4 w-4" />
               Sponsor
             </a>
-            <span className="text-zinc-700">|</span>
-            <span className="text-zinc-400">50+ models supported</span>
+            <span className="text-border">|</span>
+            <span>50+ models supported</span>
           </div>
         </div>
       </div>

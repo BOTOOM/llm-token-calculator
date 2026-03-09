@@ -1,0 +1,16 @@
+{
+  "name": "Tokonomics - LLM Token Counter & Cost Calculator",
+  "short_name": "Tokonomics",
+  "description": "Calculate and compare token costs across 50+ LLM models",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

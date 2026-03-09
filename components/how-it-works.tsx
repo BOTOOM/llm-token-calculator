@@ -1,0 +1,83 @@
+import { Calculator, Coins, BarChart3, Zap } from 'lucide-react'
+
+const steps = [
+  {
+    icon: Calculator,
+    title: 'Token Counting',
+    description:
+      'LLM providers charge based on the number of tokens processed. Tokens are pieces of text - roughly 4 characters or 0.75 words on average.',
+  },
+  {
+    icon: Coins,
+    title: 'Input vs Output Tokens',
+    description:
+      'Input tokens are what you send to the model (prompts, context). Output tokens are the generated response. Each has different pricing.',
+  },
+  {
+    icon: BarChart3,
+    title: 'Tiered Pricing',
+    description:
+      'Different models have vastly different costs. Flagship models like GPT-4o cost more than efficient alternatives like GPT-4o-mini.',
+  },
+  {
+    icon: Zap,
+    title: 'Cost Optimization',
+    description:
+      'By comparing costs across providers, you can save 10-90% on your LLM spending without sacrificing quality for your use case.',
+  },
+]
+
+export function HowItWorks() {
+  return (
+    <section id="how-it-works" className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="mx-auto mb-12 max-w-2xl text-center">
+          <h2 className="mb-4 text-3xl font-bold text-white">How Token Pricing Works</h2>
+          <p className="text-zinc-400">
+            Understanding token-based billing helps you make smarter decisions about which models to use for your applications.
+          </p>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {steps.map((step, index) => (
+            <div
+              key={step.title}
+              className="group relative rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 backdrop-blur-sm transition-all hover:border-zinc-700"
+            >
+              <div className="absolute -top-3 left-6">
+                <span className="rounded-full bg-zinc-800 px-2.5 py-1 text-xs font-medium text-zinc-400">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+              </div>
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
+                <step.icon className="h-6 w-6 text-cyan-400" />
+              </div>
+              <h3 className="mb-2 font-semibold text-white">{step.title}</h3>
+              <p className="text-sm leading-relaxed text-zinc-400">{step.description}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mx-auto mt-12 max-w-3xl rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 backdrop-blur-sm">
+          <h3 className="mb-4 font-semibold text-white">The Calculation Formula</h3>
+          <div className="rounded-lg bg-zinc-950 p-4 font-mono text-sm">
+            <span className="text-cyan-400">Total Cost</span>
+            <span className="text-zinc-500"> = </span>
+            <span className="text-zinc-300">(Input Tokens</span>
+            <span className="text-zinc-500"> * </span>
+            <span className="text-blue-400">Rate_In</span>
+            <span className="text-zinc-300">)</span>
+            <span className="text-zinc-500"> + </span>
+            <span className="text-zinc-300">(Output Tokens</span>
+            <span className="text-zinc-500"> * </span>
+            <span className="text-blue-400">Rate_Out</span>
+            <span className="text-zinc-300">)</span>
+          </div>
+          <p className="mt-4 text-sm text-zinc-400">
+            Rates are typically expressed per 1,000 tokens. Our calculator automatically applies the correct rates for each provider and multiplies by your expected usage volume.
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}

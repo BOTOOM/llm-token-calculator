@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import {
   Table,
   TableBody,
@@ -67,6 +67,181 @@ function formatContextWindow(tokens?: number): string {
   return tokens.toString()
 }
 
+// Memoized capability badge component
+const CapabilityBadge = memo(function CapabilityBadge({ capKey }: { capKey: CapabilityFilter }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-muted text-muted-foreground">
+          {CAPABILITY_ICONS[capKey]}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        <p className="font-medium">{CAPABILITY_LABELS[capKey].label}</p>
+        <p className="text-xs text-muted-foreground">{CAPABILITY_LABELS[capKey].description}</p>
+      </TooltipContent>
+    </Tooltip>
+  )
+})
+
+// Memoized capability badges container
+const ModelCapabilityBadges = memo(function ModelCapabilityBadges({ estimate }: { estimate: CostEstimate }) {
+  const activeCapabilities = useMemo(() => {
+    const capabilities: CapabilityFilter[] = ['supportsVision', 'supportsFunctionCalling', 'isReasoning', 'isCoding', 'isMultimodal']
+    return capabilities.filter(key => estimate[key])
+  }, [estimate])
+
+  if (activeCapabilities.length === 0) return null
+
+  return (
+    <div className="mt-1 flex flex-wrap gap-1">
+      {activeCapabilities.slice(0, 3).map((key) => (
+        <CapabilityBadge key={key} capKey={key} />
+      ))}
+      {activeCapabilities.length > 3 && (
+        <span className="inline-flex h-5 items-center rounded bg-muted px-1.5 text-[10px] text-muted-foreground">
+          +{activeCapabilities.length - 3}
+        </span>
+      )}
+    </div>
+  )
+})
+
+// Memoized table row component
+const ModelRow = memo(function ModelRow({ 
+  estimate, 
+  isCheapest 
+}: { 
+  estimate: CostEstimate
+  isCheapest: boolean 
+}) {
+  return (
+    <TableRow
+      className={cn(
+        'border-border',
+        isCheapest && 'bg-cyan-500/5'
+      )}
+    >
+      <TableCell className="font-medium text-foreground">
+        <div className="flex flex-col">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate">{estimate.displayName}</span>
+            {estimate.isFlagship && (
+              <Badge
+                variant="outline"
+                className="border-blue-500/30 bg-blue-500/10 text-[10px] text-blue-600 dark:text-blue-400"
+              >
+                Flagship
+              </Badge>
+            )}
+            {estimate.isPopular && (
+              <Badge
+                variant="outline"
+                className="border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600 dark:text-emerald-400"
+              >
+                Popular
+              </Badge>
+            )}
+            {estimate.description && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="text-sm">{estimate.description}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          <ModelCapabilityBadges estimate={estimate} />
+        </div>
+      </TableCell>
+      <TableCell className="text-muted-foreground">{estimate.provider}</TableCell>
+      <TableCell className="text-right tabular-nums">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="cursor-help">{formatContextWindow(estimate.contextWindow)}</span>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p className="text-sm">
+              {estimate.contextWindow?.toLocaleString() || 'Unknown'} tokens
+            </p>
+            {estimate.maxOutputTokens && (
+              <p className="text-xs text-muted-foreground">
+                Max output: {estimate.maxOutputTokens.toLocaleString()} tokens
+              </p>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      </TableCell>
+      <TableCell className="text-right tabular-nums">
+        {formatPricePer1M(estimate.inputPricePer1M)}
+      </TableCell>
+      <TableCell className="text-right tabular-nums">
+        {formatPricePer1M(estimate.outputPricePer1M)}
+      </TableCell>
+      <TableCell className="text-right tabular-nums">
+        {formatCurrency(estimate.costPerRequest)}
+      </TableCell>
+      <TableCell
+        className={cn(
+          'text-right tabular-nums font-semibold',
+          isCheapest ? 'text-cyan-600 dark:text-cyan-400' : 'text-foreground'
+        )}
+      >
+        {formatCurrency(estimate.monthlyCost)}
+      </TableCell>
+    </TableRow>
+  )
+})
+
+// Memoized provider list item
+const ProviderItem = memo(function ProviderItem({ 
+  provider, 
+  isChecked, 
+  onToggle 
+}: { 
+  provider: string
+  isChecked: boolean
+  onToggle: () => void 
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted">
+      <Checkbox
+        checked={isChecked}
+        onCheckedChange={onToggle}
+        className="data-[state=checked]:border-cyan-500 data-[state=checked]:bg-cyan-500"
+      />
+      <span className="text-sm">{provider}</span>
+    </label>
+  )
+})
+
+// Memoized capability list item
+const CapabilityItem = memo(function CapabilityItem({ 
+  cap, 
+  isChecked, 
+  onToggle 
+}: { 
+  cap: CapabilityFilter
+  isChecked: boolean
+  onToggle: () => void 
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted">
+      <Checkbox
+        checked={isChecked}
+        onCheckedChange={onToggle}
+        className="data-[state=checked]:border-cyan-500 data-[state=checked]:bg-cyan-500"
+      />
+      <div className="flex items-center gap-2 text-sm">
+        {CAPABILITY_ICONS[cap]}
+        <span>{CAPABILITY_LABELS[cap].label}</span>
+      </div>
+    </label>
+  )
+})
+
 export function ComparisonTable({ estimates, priceSource, lastUpdated }: ComparisonTableProps) {
   const [sortField, setSortField] = useState<SortField>('monthlyCost')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -82,14 +257,16 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
     return [...new Set(estimates.map(e => e.provider))].sort()
   }, [estimates])
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
+  const handleSort = useCallback((field: SortField) => {
+    setSortField(prev => {
+      if (prev === field) {
+        setSortDirection(d => d === 'asc' ? 'desc' : 'asc')
+        return prev
+      }
       setSortDirection('asc')
-    }
-  }
+      return field
+    })
+  }, [])
 
   const toggleProvider = useCallback((provider: string) => {
     setSelectedProviders((prev) =>
@@ -106,6 +283,9 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
         : [...prev, capability]
     )
   }, [])
+
+  const clearProviders = useCallback(() => setSelectedProviders([]), [])
+  const clearCapabilities = useCallback(() => setSelectedCapabilities([]), [])
 
   const clearAllFilters = useCallback(() => {
     setSelectedProviders([])
@@ -176,7 +356,7 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
     return sortedEstimates.reduce((min, e) => (e.monthlyCost < min.monthlyCost ? e : min))
   }, [sortedEstimates])
 
-  const formatLastUpdated = (dateString?: string) => {
+  const formatLastUpdated = useCallback((dateString?: string) => {
     if (!dateString) return 'Unknown'
     const date = new Date(dateString)
     const now = new Date()
@@ -187,9 +367,9 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
     if (diffHours < 24) return `${diffHours}h ago`
     const diffDays = Math.floor(diffHours / 24)
     return `${diffDays}d ago`
-  }
+  }, [])
 
-  const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+  const SortButton = useCallback(({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <Button
       variant="ghost"
       size="sm"
@@ -202,391 +382,253 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
         sortField === field && "text-cyan-600 dark:text-cyan-400"
       )} />
     </Button>
-  )
+  ), [handleSort, sortField])
 
-  const ModelCapabilityBadges = ({ estimate }: { estimate: CostEstimate }) => {
-    const capabilities: { key: CapabilityFilter; active: boolean }[] = [
-      { key: 'supportsVision', active: !!estimate.supportsVision },
-      { key: 'supportsFunctionCalling', active: !!estimate.supportsFunctionCalling },
-      { key: 'isReasoning', active: !!estimate.isReasoning },
-      { key: 'isCoding', active: !!estimate.isCoding },
-      { key: 'isMultimodal', active: !!estimate.isMultimodal },
-    ]
-
-    const activeCapabilities = capabilities.filter(c => c.active)
-    if (activeCapabilities.length === 0) return null
-
-    return (
-      <div className="mt-1 flex flex-wrap gap-1">
-        {activeCapabilities.slice(0, 3).map(({ key }) => (
-          <TooltipProvider key={key} delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-muted text-muted-foreground">
-                  {CAPABILITY_ICONS[key]}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <p className="font-medium">{CAPABILITY_LABELS[key].label}</p>
-                <p className="text-xs text-muted-foreground">{CAPABILITY_LABELS[key].description}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ))}
-        {activeCapabilities.length > 3 && (
-          <span className="inline-flex h-5 items-center rounded bg-muted px-1.5 text-[10px] text-muted-foreground">
-            +{activeCapabilities.length - 3}
-          </span>
-        )}
-      </div>
-    )
-  }
+  const capabilityKeys = useMemo(() => Object.keys(CAPABILITY_LABELS) as CapabilityFilter[], [])
 
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="flex flex-col gap-4 border-b border-border p-4">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground">Model Comparison Matrix</h3>
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Database className="h-3.5 w-3.5" />
-                {priceSource === 'LiteLLM' ? 'Live pricing from LiteLLM' : 'Fallback pricing data'}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                Updated {formatLastUpdated(lastUpdated)}
-              </span>
+    <TooltipProvider delayDuration={200}>
+      <div className="rounded-xl border border-border bg-card">
+        <div className="flex flex-col gap-4 border-b border-border p-4">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Model Comparison Matrix</h3>
+              <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Database className="h-3.5 w-3.5" />
+                  {priceSource === 'LiteLLM' ? 'Live pricing from LiteLLM' : 'Fallback pricing data'}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  Updated {formatLastUpdated(lastUpdated)}
+                </span>
+              </div>
             </div>
+            
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="mr-1.5 h-3.5 w-3.5" />
+                Clear filters
+              </Button>
+            )}
           </div>
-          
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAllFilters}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="mr-1.5 h-3.5 w-3.5" />
-              Clear filters
-            </Button>
-          )}
-        </div>
 
-        {/* Filters Row */}
-        <div className="flex flex-wrap gap-2">
-          {/* Provider Filter */}
-          <Popover open={providerFilterOpen} onOpenChange={setProviderFilterOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  selectedProviders.length > 0 && "border-cyan-500/50 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
-                )}
-              >
-                <Filter className="mr-2 h-3.5 w-3.5" />
-                Providers
-                {selectedProviders.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
-                    {selectedProviders.length}
-                  </Badge>
-                )}
-                <ChevronDown className="ml-2 h-3.5 w-3.5" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent 
-              align="start" 
-              className="w-56 p-2"
-              onInteractOutside={() => setProviderFilterOpen(false)}
-            >
-              <div className="mb-2 flex items-center justify-between px-2">
-                <span className="text-xs font-medium text-muted-foreground">Filter by provider</span>
-                {selectedProviders.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs text-muted-foreground"
-                    onClick={() => setSelectedProviders([])}
-                  >
-                    Clear
-                  </Button>
-                )}
-              </div>
-              <div className="max-h-[280px] space-y-1 overflow-y-auto">
-                {providers.map((provider) => (
-                  <label
-                    key={provider}
-                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted"
-                  >
-                    <Checkbox
-                      checked={selectedProviders.includes(provider)}
-                      onCheckedChange={() => toggleProvider(provider)}
-                      className="data-[state=checked]:border-cyan-500 data-[state=checked]:bg-cyan-500"
+          {/* Filters Row */}
+          <div className="flex flex-wrap gap-2">
+            {/* Provider Filter */}
+            <Popover open={providerFilterOpen} onOpenChange={setProviderFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    selectedProviders.length > 0 && "border-cyan-500/50 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+                  )}
+                >
+                  <Filter className="mr-2 h-3.5 w-3.5" />
+                  Providers
+                  {selectedProviders.length > 0 && (
+                    <Badge variant="secondary" className="ml-2 bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
+                      {selectedProviders.length}
+                    </Badge>
+                  )}
+                  <ChevronDown className="ml-2 h-3.5 w-3.5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-56 p-2">
+                <div className="mb-2 flex items-center justify-between px-2">
+                  <span className="text-xs font-medium text-muted-foreground">Filter by provider</span>
+                  {selectedProviders.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-muted-foreground"
+                      onClick={clearProviders}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                <div className="max-h-[280px] space-y-1 overflow-y-auto">
+                  {providers.map((provider) => (
+                    <ProviderItem
+                      key={provider}
+                      provider={provider}
+                      isChecked={selectedProviders.includes(provider)}
+                      onToggle={() => toggleProvider(provider)}
                     />
-                    <span className="text-sm">{provider}</span>
-                  </label>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
-          {/* Capabilities Filter */}
-          <Popover open={capabilityFilterOpen} onOpenChange={setCapabilityFilterOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  selectedCapabilities.length > 0 && "border-cyan-500/50 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
-                )}
-              >
-                <Layers className="mr-2 h-3.5 w-3.5" />
-                Capabilities
-                {selectedCapabilities.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
-                    {selectedCapabilities.length}
-                  </Badge>
-                )}
-                <ChevronDown className="ml-2 h-3.5 w-3.5" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent 
-              align="start" 
-              className="w-64 p-2"
-              onInteractOutside={() => setCapabilityFilterOpen(false)}
-            >
-              <div className="mb-2 flex items-center justify-between px-2">
-                <span className="text-xs font-medium text-muted-foreground">Filter by capability</span>
-                {selectedCapabilities.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs text-muted-foreground"
-                    onClick={() => setSelectedCapabilities([])}
-                  >
-                    Clear
-                  </Button>
-                )}
-              </div>
-              <div className="space-y-1">
-                {(Object.keys(CAPABILITY_LABELS) as CapabilityFilter[]).map((cap) => (
-                  <label
-                    key={cap}
-                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted"
-                  >
-                    <Checkbox
-                      checked={selectedCapabilities.includes(cap)}
-                      onCheckedChange={() => toggleCapability(cap)}
-                      className="data-[state=checked]:border-cyan-500 data-[state=checked]:bg-cyan-500"
+            {/* Capabilities Filter */}
+            <Popover open={capabilityFilterOpen} onOpenChange={setCapabilityFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    selectedCapabilities.length > 0 && "border-cyan-500/50 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+                  )}
+                >
+                  <Layers className="mr-2 h-3.5 w-3.5" />
+                  Capabilities
+                  {selectedCapabilities.length > 0 && (
+                    <Badge variant="secondary" className="ml-2 bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
+                      {selectedCapabilities.length}
+                    </Badge>
+                  )}
+                  <ChevronDown className="ml-2 h-3.5 w-3.5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-64 p-2">
+                <div className="mb-2 flex items-center justify-between px-2">
+                  <span className="text-xs font-medium text-muted-foreground">Filter by capability</span>
+                  {selectedCapabilities.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-muted-foreground"
+                      onClick={clearCapabilities}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  {capabilityKeys.map((cap) => (
+                    <CapabilityItem
+                      key={cap}
+                      cap={cap}
+                      isChecked={selectedCapabilities.includes(cap)}
+                      onToggle={() => toggleCapability(cap)}
                     />
-                    <div className="flex items-center gap-2 text-sm">
-                      {CAPABILITY_ICONS[cap]}
-                      <span>{CAPABILITY_LABELS[cap].label}</span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
-          {/* Context Window Filter */}
-          <Popover open={contextFilterOpen} onOpenChange={setContextFilterOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  selectedContextFilter.min !== undefined && "border-cyan-500/50 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
-                )}
-              >
-                <Database className="mr-2 h-3.5 w-3.5" />
-                Context: {selectedContextFilter.label}
-                <ChevronDown className="ml-2 h-3.5 w-3.5" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent 
-              align="start" 
-              className="w-48 p-2"
-              onInteractOutside={() => setContextFilterOpen(false)}
-            >
-              <div className="mb-2 px-2">
-                <span className="text-xs font-medium text-muted-foreground">Context window size</span>
-              </div>
-              <div className="space-y-1">
-                {CONTEXT_WINDOW_FILTERS.map((filter, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setSelectedContextFilter(filter)
-                      setContextFilterOpen(false)
-                    }}
-                    className={cn(
-                      "flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted",
-                      selectedContextFilter.label === filter.label && "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
-                    )}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Sort Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleSort('monthlyCost')}
-          >
-            <ArrowUpDown className="mr-2 h-3.5 w-3.5" />
-            Sort by Cost
-          </Button>
-        </div>
-      </div>
-
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="w-[260px]">
-                <SortButton field="model">Model</SortButton>
-              </TableHead>
-              <TableHead>
-                <SortButton field="provider">Provider</SortButton>
-              </TableHead>
-              <TableHead className="text-right">
-                <SortButton field="contextWindow">Context</SortButton>
-              </TableHead>
-              <TableHead className="text-right">
-                <SortButton field="inputPricePer1M">Input / 1M</SortButton>
-              </TableHead>
-              <TableHead className="text-right">
-                <SortButton field="outputPricePer1M">Output / 1M</SortButton>
-              </TableHead>
-              <TableHead className="text-right">
-                <SortButton field="costPerRequest">Cost/Request</SortButton>
-              </TableHead>
-              <TableHead className="text-right">
-                <SortButton field="monthlyCost">Monthly Est.</SortButton>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedEstimates.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  No models match the current filters.
-                </TableCell>
-              </TableRow>
-            ) : (
-              sortedEstimates.map((estimate) => {
-                const isCheapest = cheapestModel?.model === estimate.model && cheapestModel?.provider === estimate.provider
-                return (
-                  <TableRow
-                    key={`${estimate.provider}-${estimate.model}`}
-                    className={cn(
-                      'border-border',
-                      isCheapest && 'bg-cyan-500/5'
-                    )}
-                  >
-                    <TableCell className="font-medium text-foreground">
-                      <div className="flex flex-col">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="truncate">{estimate.displayName}</span>
-                          {estimate.isFlagship && (
-                            <Badge
-                              variant="outline"
-                              className="border-blue-500/30 bg-blue-500/10 text-[10px] text-blue-600 dark:text-blue-400"
-                            >
-                              Flagship
-                            </Badge>
-                          )}
-                          {estimate.isPopular && (
-                            <Badge
-                              variant="outline"
-                              className="border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600 dark:text-emerald-400"
-                            >
-                              Popular
-                            </Badge>
-                          )}
-                          {estimate.description && (
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Info className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-xs">
-                                  <p className="text-sm">{estimate.description}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                        <ModelCapabilityBadges estimate={estimate} />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{estimate.provider}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      <TooltipProvider delayDuration={200}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="cursor-help">{formatContextWindow(estimate.contextWindow)}</span>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            <p className="text-sm">
-                              {estimate.contextWindow?.toLocaleString() || 'Unknown'} tokens
-                            </p>
-                            {estimate.maxOutputTokens && (
-                              <p className="text-xs text-muted-foreground">
-                                Max output: {estimate.maxOutputTokens.toLocaleString()} tokens
-                              </p>
-                            )}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatPricePer1M(estimate.inputPricePer1M)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatPricePer1M(estimate.outputPricePer1M)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(estimate.costPerRequest)}
-                    </TableCell>
-                    <TableCell
+            {/* Context Window Filter */}
+            <Popover open={contextFilterOpen} onOpenChange={setContextFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    selectedContextFilter.min !== undefined && "border-cyan-500/50 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+                  )}
+                >
+                  <Database className="mr-2 h-3.5 w-3.5" />
+                  Context: {selectedContextFilter.label}
+                  <ChevronDown className="ml-2 h-3.5 w-3.5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-48 p-2">
+                <div className="mb-2 px-2">
+                  <span className="text-xs font-medium text-muted-foreground">Context window size</span>
+                </div>
+                <div className="space-y-1">
+                  {CONTEXT_WINDOW_FILTERS.map((filter, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setSelectedContextFilter(filter)
+                        setContextFilterOpen(false)
+                      }}
                       className={cn(
-                        'text-right tabular-nums font-semibold',
-                        isCheapest ? 'text-cyan-600 dark:text-cyan-400' : 'text-foreground'
+                        "flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted",
+                        selectedContextFilter.label === filter.label && "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
                       )}
                     >
-                      {formatCurrency(estimate.monthlyCost)}
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      
-      <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
-        Showing {sortedEstimates.length} of {estimates.length} models
-        {priceSource === 'LiteLLM' && (
-          <span className="ml-2">
-            | Pricing data from{' '}
-            <a 
-              href="https://github.com/BerriAI/litellm" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-cyan-600 hover:underline dark:text-cyan-400"
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Sort Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleSort('monthlyCost')}
             >
-              LiteLLM
-            </a>
-          </span>
-        )}
+              <ArrowUpDown className="mr-2 h-3.5 w-3.5" />
+              Sort by Cost
+            </Button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="w-[260px]">
+                  <SortButton field="model">Model</SortButton>
+                </TableHead>
+                <TableHead>
+                  <SortButton field="provider">Provider</SortButton>
+                </TableHead>
+                <TableHead className="text-right">
+                  <SortButton field="contextWindow">Context</SortButton>
+                </TableHead>
+                <TableHead className="text-right">
+                  <SortButton field="inputPricePer1M">Input / 1M</SortButton>
+                </TableHead>
+                <TableHead className="text-right">
+                  <SortButton field="outputPricePer1M">Output / 1M</SortButton>
+                </TableHead>
+                <TableHead className="text-right">
+                  <SortButton field="costPerRequest">Cost/Request</SortButton>
+                </TableHead>
+                <TableHead className="text-right">
+                  <SortButton field="monthlyCost">Monthly Est.</SortButton>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedEstimates.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                    No models match the current filters.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                sortedEstimates.map((estimate) => (
+                  <ModelRow
+                    key={`${estimate.provider}-${estimate.model}`}
+                    estimate={estimate}
+                    isCheapest={cheapestModel?.model === estimate.model && cheapestModel?.provider === estimate.provider}
+                  />
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        
+        <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
+          Showing {sortedEstimates.length} of {estimates.length} models
+          {priceSource === 'LiteLLM' && (
+            <span className="ml-2">
+              | Pricing data from{' '}
+              <a 
+                href="https://github.com/BerriAI/litellm" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-cyan-600 hover:underline dark:text-cyan-400"
+              >
+                LiteLLM
+              </a>
+            </span>
+          )}
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   )
 }

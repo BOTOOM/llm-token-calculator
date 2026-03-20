@@ -16,18 +16,19 @@ export async function GET(request: NextRequest) {
     const hasCache = sp.get('hasCache') === 'true'
     const search   = sp.get('search')?.toLowerCase().slice(0, 80) // cap search length
 
-    let prices = await getModelPrices()
+    const { models: allModels } = await getModelPrices()
+    let filtered = allModels
 
-    if (provider) prices = prices.filter((p) => p.provider.toLowerCase() === provider)
-    if (hasCache)  prices = prices.filter((p) => p.cachedInputPricePer1M !== undefined)
-    if (search)    prices = prices.filter(
+    if (provider) filtered = filtered.filter((p) => p.provider.toLowerCase() === provider)
+    if (hasCache)  filtered = filtered.filter((p) => p.cachedInputPricePer1M !== undefined)
+    if (search)    filtered = filtered.filter(
       (p) => p.model.toLowerCase().includes(search) || p.provider.toLowerCase().includes(search)
     )
 
-    const providers = [...new Set(prices.map((p) => p.provider))].sort()
+    const providers = [...new Set(filtered.map((p) => p.provider))].sort()
 
     // Minimal payload — only fields consumers actually need
-    const models = prices.map((p) => ({
+    const models = filtered.map((p) => ({
       id:       p.model,
       provider: p.provider,
       input:    p.inputPricePer1M,

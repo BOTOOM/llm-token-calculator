@@ -45,17 +45,18 @@ function calcCost(m: ModelPrice, input: number, output: number, cached: number):
 async function handleBest(input: BestInput, rl: Awaited<ReturnType<typeof rateLimit>>) {
   const { inputTokens, outputTokens, cachedTokens = 0, filters = {} } = input
 
-  let prices = await getModelPrices()
+  const { models } = await getModelPrices()
+  let filtered = models
 
   if (filters.providers?.length) {
     const lp = filters.providers.map((p) => p.toLowerCase())
-    prices = prices.filter((p) => lp.includes(p.provider.toLowerCase()))
+    filtered = filtered.filter((p) => lp.includes(p.provider.toLowerCase()))
   }
   if (filters.minContext) {
-    prices = prices.filter((p) => (p.contextWindow ?? 0) >= filters.minContext!)
+    filtered = filtered.filter((p) => (p.contextWindow ?? 0) >= filters.minContext!)
   }
   if (filters.capabilities?.length) {
-    prices = prices.filter((p) =>
+    filtered = filtered.filter((p) =>
       filters.capabilities!.every((cap) => {
         if (cap === 'vision')    return p.supportsVision
         if (cap === 'functions') return p.supportsFunctionCalling
@@ -67,14 +68,14 @@ async function handleBest(input: BestInput, rl: Awaited<ReturnType<typeof rateLi
     )
   }
 
-  if (prices.length === 0) {
+  if (filtered.length === 0) {
     return NextResponse.json(
       { error: 'No models found', message: 'No models match the specified filters.' },
       { status: 404, headers: getRateLimitHeaders(rl) }
     )
   }
 
-  const ranked = prices
+  const ranked = filtered
     .map((m) => ({ m, cost: calcCost(m, inputTokens, outputTokens, cachedTokens) }))
     .sort((a, b) => a.cost - b.cost)
 

@@ -4,6 +4,7 @@ import { Github, Menu, X, Heart, Code } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 
 const GITHUB_REPO = 'https://github.com/BOTOOM/llm-token-calculator'
 
@@ -34,14 +35,37 @@ function Logo({ className }: { className?: string }) {
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname()
+  const router = useRouter()
+  const isHomePage = pathname === '/'
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
+    e.preventDefault()
+    setIsMenuOpen(false)
+    
+    if (isHomePage) {
+      const element = document.getElementById(hash)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' })
+      }
+    } else {
+      router.push(`/${hash ? '#' + hash : ''}`)
+    }
+  }
 
   const scrollToCalculator = () => {
-    const element = document.getElementById('calculator')
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
-    }
     setIsMenuOpen(false)
+    if (isHomePage) {
+      const element = document.getElementById('calculator')
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' })
+      }
+    } else {
+      router.push('/#calculator')
+    }
   }
+
+  const getHref = (hash: string) => isHomePage ? `#${hash}` : `/#${hash}`
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -56,19 +80,22 @@ export function Navbar() {
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-8 md:flex">
           <a
-            href="#calculator"
+            href={getHref('calculator')}
+            onClick={(e) => handleNavClick(e, 'calculator')}
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             Calculator
           </a>
           <a
-            href="#comparison"
+            href={getHref('comparison')}
+            onClick={(e) => handleNavClick(e, 'comparison')}
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             Compare Models
           </a>
           <a
-            href="#how-it-works"
+            href={getHref('how-it-works')}
+            onClick={(e) => handleNavClick(e, 'how-it-works')}
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             How It Works
@@ -143,23 +170,23 @@ export function Navbar() {
         <div className="border-t border-border bg-background px-4 py-4 md:hidden">
           <nav className="flex flex-col gap-4">
             <a
-              href="#calculator"
+              href={getHref('calculator')}
+              onClick={(e) => handleNavClick(e, 'calculator')}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsMenuOpen(false)}
             >
               Calculator
             </a>
             <a
-              href="#comparison"
+              href={getHref('comparison')}
+              onClick={(e) => handleNavClick(e, 'comparison')}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsMenuOpen(false)}
             >
               Compare Models
             </a>
             <a
-              href="#how-it-works"
+              href={getHref('how-it-works')}
+              onClick={(e) => handleNavClick(e, 'how-it-works')}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsMenuOpen(false)}
             >
               How It Works
             </a>

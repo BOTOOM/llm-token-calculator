@@ -251,7 +251,7 @@ export function Calculator() {
           <ComparisonTable 
             estimates={costEstimates} 
             priceSource={priceData?.source}
-            lastUpdated={priceData?.lastUpdated}
+            cacheMaxAge={priceData?.cacheMaxAge}
           />
         </div>
       </div>

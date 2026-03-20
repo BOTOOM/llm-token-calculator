@@ -3,6 +3,9 @@ import type { ModelPrice, LiteLLMPricingResponse, LiteLLMModelData } from '@/lib
 
 const LITELLM_PRICING_URL = 'https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json'
 
+// Cache duration in seconds (1 hour)
+const CACHE_DURATION = 3600
+
 // Provider display name mapping
 const providerMap: Record<string, string> = {
   'openai': 'OpenAI',
@@ -107,7 +110,7 @@ function parseModelData(modelId: string, data: LiteLLMModelData): ModelPrice | n
 export async function GET() {
   try {
     const response = await fetch(LITELLM_PRICING_URL, {
-      next: { revalidate: 3600 },
+      next: { revalidate: CACHE_DURATION },
     })
     
     if (!response.ok) {
@@ -137,8 +140,13 @@ export async function GET() {
     
     return NextResponse.json({
       models,
-      lastUpdated: new Date().toISOString(),
       source: 'LiteLLM',
+      cacheMaxAge: CACHE_DURATION,
+      note: `Prices are cached for ${CACHE_DURATION / 60} minutes and sourced from LiteLLM's pricing database`,
+    }, {
+      headers: {
+        'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate=${CACHE_DURATION * 2}`,
+      }
     })
   } catch (error) {
     console.error('Error fetching model prices:', error)
@@ -147,8 +155,9 @@ export async function GET() {
     
     return NextResponse.json({
       models: fallbackModelPrices,
-      lastUpdated: new Date().toISOString(),
       source: 'fallback',
+      cacheMaxAge: CACHE_DURATION,
+      note: 'Using fallback pricing data. Live prices temporarily unavailable.',
     })
   }
 }

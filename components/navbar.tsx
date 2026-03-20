@@ -1,6 +1,6 @@
 'use client'
 
-import { Github, Menu, X, Heart } from 'lucide-react'
+import { Github, Menu, X, Heart, Code } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useState } from 'react'
@@ -72,6 +72,13 @@ export function Navbar() {
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             How It Works
+          </a>
+          <a
+            href="/docs"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Code className="h-3.5 w-3.5" />
+            API
           </a>
         </nav>
 
@@ -155,6 +162,14 @@ export function Navbar() {
               onClick={() => setIsMenuOpen(false)}
             >
               How It Works
+            </a>
+            <a
+              href="/docs"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <Code className="h-3.5 w-3.5" />
+              API Documentation
             </a>
             <div className="flex items-center gap-3 pt-2">
               <a

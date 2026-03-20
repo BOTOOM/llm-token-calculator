@@ -23,6 +23,8 @@ export function Calculator() {
   const [outputTokensManual, setOutputTokensManual] = useState(500)
   const [outputMode, setOutputMode] = useState<'text' | 'number'>('number')
   
+  const [cachedTokens, setCachedTokens] = useState(0)
+  
   const [isCalculating, setIsCalculating] = useState(false)
   
   const [usage, setUsage] = useState<UsageProjection>({
@@ -51,7 +53,6 @@ export function Calculator() {
   // Real token counting with debounce
   const calculateRealTokens = useCallback(() => {
     if (inputMode === 'number' && outputMode === 'number') {
-      // Both modes are manual, no need to calculate
       setInputTokenCounts([])
       setOutputTokenCount(0)
       setIsCalculating(false)
@@ -70,7 +71,6 @@ export function Calculator() {
 
     setIsCalculating(true)
 
-    // Use setTimeout to not block UI
     setTimeout(() => {
       const providers = [
         { provider: 'OpenAI', displayName: 'OpenAI (Tiktoken)' },
@@ -106,7 +106,7 @@ export function Calculator() {
     return () => clearTimeout(timer)
   }, [calculateRealTokens])
 
-  // Get the effective input tokens (from text or manual input)
+  // Get the effective input tokens
   const effectiveInputTokens = useMemo(() => {
     if (inputMode === 'number') {
       return inputTokensManual
@@ -117,7 +117,7 @@ export function Calculator() {
     return quickInputEstimate
   }, [inputMode, inputTokensManual, inputTokenCounts, quickInputEstimate])
 
-  // Get the effective output tokens (from text or manual input)
+  // Get the effective output tokens
   const effectiveOutputTokens = useMemo(() => {
     if (outputMode === 'number') {
       return outputTokensManual
@@ -133,10 +133,13 @@ export function Calculator() {
     }))
   }, [effectiveOutputTokens])
 
-  // Calculate cost estimates for all models
+  // Calculate cost estimates for all models (including cached tokens)
   const costEstimates = useMemo(() => {
-    return calculateCostEstimates(effectiveInputTokens, effectiveOutputTokens, models, usage)
-  }, [effectiveInputTokens, effectiveOutputTokens, models, usage])
+    // For now, cachedTokens reduce the effective input cost
+    // In a more sophisticated version, we'd use cachedInputPricePer1M where available
+    const effectiveInput = Math.max(0, effectiveInputTokens - cachedTokens)
+    return calculateCostEstimates(effectiveInput, effectiveOutputTokens, models, usage)
+  }, [effectiveInputTokens, effectiveOutputTokens, cachedTokens, models, usage])
 
   // Find cheapest and most expensive models
   const cheapestModel = useMemo(() => findCheapestModel(costEstimates), [costEstimates])
@@ -147,7 +150,6 @@ export function Calculator() {
 
   // Token count cards with loading state
   const tokenCountsForCards = useMemo(() => {
-    // If input mode is manual, show the manual count
     if (inputMode === 'number') {
       return [
         { provider: 'Manual', displayName: 'Manual Input', tokens: inputTokensManual, isLoading: false, isEstimate: false, color: 'cyan' },
@@ -167,7 +169,6 @@ export function Calculator() {
       }))
     }
     
-    // Show quick estimates while calculating
     if (inputText) {
       return [
         { provider: 'OpenAI', displayName: 'OpenAI (Tiktoken)', tokens: quickInputEstimate, isLoading: isCalculating, isEstimate: true, color: 'emerald' },
@@ -183,8 +184,18 @@ export function Calculator() {
   return (
     <section id="calculator" className="py-16">
       <div className="container mx-auto px-4">
+        {/* Section Header */}
+        <div className="mb-8 text-center">
+          <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
+            Calculate Your Token Costs
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            Follow the steps below to get accurate cost estimates for your LLM usage
+          </p>
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main input area */}
+          {/* Main input area with steps */}
           <div className="lg:col-span-2">
             <TokenInput
               inputText={inputText}
@@ -199,14 +210,22 @@ export function Calculator() {
               onOutputTokensChange={setOutputTokensManual}
               outputMode={outputMode}
               onOutputModeChange={setOutputMode}
+              cachedTokens={cachedTokens}
+              onCachedTokensChange={setCachedTokens}
               inputTokenCount={effectiveInputTokens}
               outputTokenCount={outputTokenCount || quickOutputEstimate}
               isCalculating={isCalculating}
             />
             
-            {/* Token count cards */}
-            {tokenCountsForCards.length > 0 && (
+            {/* Token count cards - only show when using text mode */}
+            {inputMode === 'text' && tokenCountsForCards.length > 0 && (
               <div className="mt-6">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 text-xs font-bold text-white">
+                    4
+                  </span>
+                  <span className="text-sm font-medium text-foreground">Token Count by Provider</span>
+                </div>
                 <TokenCountCards counts={tokenCountsForCards} />
               </div>
             )}

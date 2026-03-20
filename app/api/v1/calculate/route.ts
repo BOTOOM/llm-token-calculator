@@ -65,9 +65,9 @@ function buildResponse(input: CalculateInput, model: Awaited<ReturnType<typeof g
 
 // ─── Core logic (shared by POST and GET) ───────────────────────────────────────
 async function handleCalculate(input: CalculateInput, rlResult: Awaited<ReturnType<typeof rateLimit>>) {
-  const prices  = await getModelPrices()
-  const query   = input.model.toLowerCase()
-  const modelData = prices.find(
+  const { models } = await getModelPrices()
+  const query = input.model.toLowerCase()
+  const modelData = models.find(
     (p) => p.model.toLowerCase() === query || p.displayName.toLowerCase() === query
   )
 

@@ -1,6 +1,6 @@
-# TokenBudget - LLM Token Counter & Cost Calculator
+# TokenBudget - LLM Token Counter & Cost Calculator with Free API
 
-> Calculate and compare token costs across all major LLM providers instantly
+> Calculate and compare token costs across all major LLM providers instantly. Free REST API available.
 
 ## Overview
 
@@ -9,14 +9,30 @@ TokenBudget is a free, open-source tool for developers to:
 - Compare pricing across 50+ LLM models from OpenAI, Anthropic, Google, Mistral, AWS, Meta, and more
 - Estimate monthly API costs based on usage projections
 - Filter models by capabilities (vision, reasoning, coding, function calling, etc.)
+- Use our FREE API to calculate costs programmatically
 
 ## Key Features
 
 - **Real Token Counting**: Uses js-tiktoken for accurate OpenAI token counts
 - **Live Pricing**: Fetches current prices from LiteLLM pricing database
+- **Cached Token Support**: Calculate costs with cached/prompt caching tokens
 - **Privacy First**: All calculations happen client-side, no data is sent to servers
 - **Model Comparison**: Compare 50+ models with filters for capabilities and context window
 - **Cost Projections**: Estimate daily and monthly costs based on your usage patterns
+- **FREE REST API**: No API key required, rate limited to 100 req/min
+
+## API Endpoints
+
+Base URL: https://tokenbudget.edwardiaz.dev/api/v1
+
+### POST /api/v1/calculate
+Calculate cost for a specific model with input, output, and cached tokens.
+
+### POST /api/v1/best
+Find the cheapest model for your usage with optional capability filters.
+
+### GET /api/v1/models
+List all models with pricing. Supports filtering by provider and cache support.
 
 ## Supported Providers
 
@@ -33,21 +49,30 @@ TokenBudget is a free, open-source tool for developers to:
 
 ## How It Works
 
-1. Paste your input prompt text
-2. Optionally paste expected output or enter token count
-3. Set your usage projections (requests/day, days/month)
-4. Compare costs across all models instantly
+1. Paste your input prompt text (or enter token count)
+2. Paste expected output text (or enter token count)
+3. Optionally add cached tokens if using prompt caching
+4. Set your usage projections (requests/day, days/month)
+5. Compare costs across all models instantly
+
+## The Formula
+
+Total Cost = (Input Tokens * Rate_In) + (Output Tokens * Rate_Out) + (Cached Tokens * Rate_Cache)
+
+Cached tokens are input tokens served from the provider's cache (available on OpenAI, Anthropic) at a 50-75% discount.
 
 ## Technical Details
 
 - Built with Next.js 16 and React 19
 - Uses js-tiktoken for OpenAI tokenization
-- Pricing data from LiteLLM (updated hourly)
+- Pricing data from LiteLLM (cached, refreshed hourly)
+- Edge-deployed API for low latency globally
 - Fully responsive, works on mobile
 
 ## Links
 
 - Website: https://tokenbudget.edwardiaz.dev
+- API Docs: https://tokenbudget.edwardiaz.dev/docs
 - GitHub: https://github.com/BOTOOM/llm-token-calculator
 - Sponsor: https://github.com/sponsors/BOTOOM
 

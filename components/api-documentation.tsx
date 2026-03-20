@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Copy, Check, AlertCircle, Zap, Code, Database, ArrowRight } from 'lucide-react'
+import { Copy, Check, AlertCircle, Zap, Code, Database, ArrowRight, Play, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
 function CodeBlock({ code, language = 'bash' }: { code: string; language?: string }) {
@@ -44,16 +46,120 @@ function CodeBlock({ code, language = 'bash' }: { code: string; language?: strin
   )
 }
 
+// API Tester component for client-side testing
+function ApiTester({ 
+  endpoint, 
+  method,
+  defaultBody 
+}: { 
+  endpoint: string
+  method: 'GET' | 'POST'
+  defaultBody?: Record<string, unknown>
+}) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [response, setResponse] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [params, setParams] = useState(defaultBody || {})
+
+  const runTest = async () => {
+    setIsLoading(true)
+    setError(null)
+    setResponse(null)
+    
+    try {
+      const url = method === 'GET' 
+        ? `${endpoint}?${new URLSearchParams(params as Record<string, string>).toString()}`
+        : endpoint
+      
+      const res = await fetch(url, {
+        method,
+        headers: method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
+        body: method === 'POST' ? JSON.stringify(params) : undefined,
+      })
+      
+      const data = await res.json()
+      setResponse(JSON.stringify(data, null, 2))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const updateParam = (key: string, value: string) => {
+    setParams(prev => ({
+      ...prev,
+      [key]: isNaN(Number(value)) ? value : Number(value)
+    }))
+  }
+
+  return (
+    <div className="mt-4 rounded-lg border border-dashed border-border bg-muted/30 p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <Play className="h-4 w-4 text-emerald-500" />
+        <span className="text-sm font-medium text-foreground">Try it live</span>
+        <span className="text-xs text-muted-foreground">(runs from your browser)</span>
+      </div>
+      
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {Object.entries(params).map(([key, value]) => (
+          <div key={key}>
+            <Label className="text-xs text-muted-foreground">{key}</Label>
+            <Input
+              value={String(value)}
+              onChange={(e) => updateParam(key, e.target.value)}
+              className="mt-1 h-8 text-sm"
+            />
+          </div>
+        ))}
+      </div>
+      
+      <Button 
+        onClick={runTest} 
+        disabled={isLoading}
+        size="sm"
+        className="mt-3 bg-emerald-600 text-white hover:bg-emerald-700"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+            Running...
+          </>
+        ) : (
+          <>
+            <Play className="mr-2 h-3.5 w-3.5" />
+            Run Request
+          </>
+        )}
+      </Button>
+      
+      {(response || error) && (
+        <div className="mt-3">
+          <Label className="text-xs text-muted-foreground">Response</Label>
+          <pre className={cn(
+            "mt-1 max-h-48 overflow-auto rounded-lg p-3 text-xs",
+            error ? "bg-red-500/10 text-red-500" : "bg-zinc-950 text-zinc-300"
+          )}>
+            {error || response}
+          </pre>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function EndpointCard({ 
   method, 
   path, 
   description, 
-  children 
+  children,
+  tester
 }: { 
   method: 'GET' | 'POST'
   path: string
   description: string
-  children: React.ReactNode 
+  children: React.ReactNode
+  tester?: { defaultBody: Record<string, unknown> }
 }) {
   const methodColors = {
     GET: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
@@ -76,6 +182,13 @@ function EndpointCard({
       </div>
       <div className="p-6">
         {children}
+        {tester && (
+          <ApiTester 
+            endpoint={path} 
+            method={method} 
+            defaultBody={tester.defaultBody}
+          />
+        )}
       </div>
     </div>
   )
@@ -97,7 +210,7 @@ export function ApiDocumentation() {
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
           Calculate LLM token costs programmatically. Perfect for integrating cost estimation 
-          into your applications, CI/CD pipelines, or monitoring dashboards.
+          into your applications, CI/CD pipelines, or monitoring dashboards. No API key required.
         </p>
       </div>
 
@@ -109,8 +222,8 @@ export function ApiDocumentation() {
           <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">
             All endpoints are rate limited to <strong>100 requests per minute</strong> per IP address. 
             Rate limit headers are included in every response: <code className="rounded bg-amber-500/10 px-1">X-RateLimit-Limit</code>, 
-            <code className="rounded bg-amber-500/10 px-1">X-RateLimit-Remaining</code>, 
-            <code className="rounded bg-amber-500/10 px-1">X-RateLimit-Reset</code>.
+            <code className="rounded bg-amber-500/10 px-1 ml-1">X-RateLimit-Remaining</code>, 
+            <code className="rounded bg-amber-500/10 px-1 ml-1">X-RateLimit-Reset</code>.
           </p>
         </div>
       </div>
@@ -131,7 +244,8 @@ export function ApiDocumentation() {
         <EndpointCard
           method="POST"
           path="/api/v1/calculate"
-          description="Calculate the cost for a specific model given input and output tokens."
+          description="Calculate the cost for a specific model given input, output, and optionally cached tokens."
+          tester={{ defaultBody: { model: 'gpt-4o', inputTokens: 1000, outputTokens: 500, cachedTokens: 0 } }}
         >
           <div className="space-y-6">
             <div>
@@ -142,7 +256,7 @@ export function ApiDocumentation() {
   "model": "gpt-4o",
   "inputTokens": 1000,
   "outputTokens": 500,
-  "cachedTokens": 200  // optional
+  "cachedTokens": 200  // optional - tokens served from cache
 }`}
               />
             </div>
@@ -160,8 +274,8 @@ export function ApiDocumentation() {
   "costs": {
     "input": 0.002,
     "output": 0.005,
-    "cached": 0.0002,
-    "total": 0.0072
+    "cached": 0.00025,
+    "total": 0.00725
   },
   "prices": {
     "inputPer1M": 2.5,
@@ -178,15 +292,7 @@ export function ApiDocumentation() {
                 language="bash"
                 code={`curl -X POST https://tokenbudget.edwardiaz.dev/api/v1/calculate \\
   -H "Content-Type: application/json" \\
-  -d '{"model":"gpt-4o","inputTokens":1000,"outputTokens":500}'`}
-              />
-            </div>
-
-            <div>
-              <h4 className="mb-3 text-sm font-medium text-foreground">GET Alternative</h4>
-              <CodeBlock
-                language="bash"
-                code={`curl "https://tokenbudget.edwardiaz.dev/api/v1/calculate?model=gpt-4o&input=1000&output=500&cached=200"`}
+  -d '{"model":"gpt-4o","inputTokens":1000,"outputTokens":500,"cachedTokens":200}'`}
               />
             </div>
           </div>
@@ -196,7 +302,8 @@ export function ApiDocumentation() {
         <EndpointCard
           method="POST"
           path="/api/v1/best"
-          description="Find the cheapest model for your token usage, with optional filters for capabilities."
+          description="Find the cheapest model for your token usage, with optional filters for capabilities and providers."
+          tester={{ defaultBody: { inputTokens: 1000, outputTokens: 500, cachedTokens: 0 } }}
         >
           <div className="space-y-6">
             <div>
@@ -230,11 +337,6 @@ export function ApiDocumentation() {
       "cached": 0,
       "total": 0.00045
     },
-    "prices": {
-      "inputPer1M": 0.15,
-      "outputPer1M": 0.6,
-      "cachedPer1M": null
-    },
     "contextWindow": 128000,
     "capabilities": {
       "vision": true,
@@ -247,7 +349,7 @@ export function ApiDocumentation() {
       "model": "claude-3-5-haiku",
       "provider": "Anthropic",
       "totalCost": 0.0028,
-      "priceDiff": 0.00235
+      "priceDiff": "+522%"
     }
   ]
 }`}
@@ -260,6 +362,7 @@ export function ApiDocumentation() {
                 <li><code className="rounded bg-muted px-1.5 py-0.5">vision</code> - Models that can analyze images</li>
                 <li><code className="rounded bg-muted px-1.5 py-0.5">functions</code> - Models that support function calling</li>
                 <li><code className="rounded bg-muted px-1.5 py-0.5">reasoning</code> - Models with enhanced reasoning (o1, o3, etc.)</li>
+                <li><code className="rounded bg-muted px-1.5 py-0.5">coding</code> - Models optimized for code generation</li>
               </ul>
             </div>
           </div>
@@ -270,6 +373,7 @@ export function ApiDocumentation() {
           method="GET"
           path="/api/v1/models"
           description="List all available models with their pricing. Supports filtering by provider and caching capability."
+          tester={{ defaultBody: { provider: '', hasCache: '', search: '' } }}
         >
           <div className="space-y-6">
             <div>
@@ -286,7 +390,7 @@ export function ApiDocumentation() {
               <CodeBlock
                 language="json"
                 code={`{
-  "count": 150,
+  "count": 65,
   "providers": ["OpenAI", "Anthropic", "Google", ...],
   "models": [
     {
@@ -340,6 +444,27 @@ export function ApiDocumentation() {
               <li><code className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-600 dark:text-red-400">500</code> - Internal server error</li>
             </ul>
           </div>
+        </div>
+      </div>
+
+      {/* Performance Notes */}
+      <div className="mt-12">
+        <h2 className="mb-6 text-2xl font-bold text-foreground">Performance</h2>
+        <div className="rounded-xl border border-border bg-card p-6">
+          <ul className="space-y-3 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <Zap className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+              <span><strong className="text-foreground">Cached Pricing Data:</strong> Model prices are cached and refreshed hourly from LiteLLM, ensuring fast response times (~50ms).</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Zap className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+              <span><strong className="text-foreground">Edge Deployment:</strong> API runs on Vercel Edge Functions for low latency globally.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Zap className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+              <span><strong className="text-foreground">Minimal Payload:</strong> Responses are optimized to include only essential data, keeping bandwidth low.</span>
+            </li>
+          </ul>
         </div>
       </div>
 

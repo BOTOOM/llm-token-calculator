@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getModelPrices, PRICE_CACHE_MAX_AGE } from '@/lib/price-fetcher'
 
-export const revalidate = PRICE_CACHE_MAX_AGE
+// Must be a static literal — Next.js cannot resolve imported constants here
+export const revalidate = 3600
 
 export async function GET() {
   const { models, source } = await getModelPrices()

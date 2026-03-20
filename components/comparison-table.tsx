@@ -47,7 +47,7 @@ import { cn } from '@/lib/utils'
 interface ComparisonTableProps {
   estimates: CostEstimate[]
   priceSource?: string
-  lastUpdated?: string
+  cacheMaxAge?: number
 }
 
 const CAPABILITY_ICONS: Record<CapabilityFilter, React.ReactNode> = {
@@ -242,7 +242,7 @@ const CapabilityItem = memo(function CapabilityItem({
   )
 })
 
-export function ComparisonTable({ estimates, priceSource, lastUpdated }: ComparisonTableProps) {
+export function ComparisonTable({ estimates, priceSource, cacheMaxAge }: ComparisonTableProps) {
   const [sortField, setSortField] = useState<SortField>('monthlyCost')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [selectedProviders, setSelectedProviders] = useState<string[]>([])
@@ -356,17 +356,12 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
     return sortedEstimates.reduce((min, e) => (e.monthlyCost < min.monthlyCost ? e : min))
   }, [sortedEstimates])
 
-  const formatLastUpdated = useCallback((dateString?: string) => {
-    if (!dateString) return 'Unknown'
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    
-    if (diffHours < 1) return 'Just now'
-    if (diffHours < 24) return `${diffHours}h ago`
-    const diffDays = Math.floor(diffHours / 24)
-    return `${diffDays}d ago`
+  const formatCacheInfo = useCallback((seconds?: number) => {
+    if (!seconds) return 'Real-time'
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `Cached ${minutes}min`
+    const hours = Math.floor(minutes / 60)
+    return `Cached ${hours}h`
   }, [])
 
   const SortButton = useCallback(({ field, children }: { field: SortField; children: React.ReactNode }) => (
@@ -400,7 +395,7 @@ export function ComparisonTable({ estimates, priceSource, lastUpdated }: Compari
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
-                  Updated {formatLastUpdated(lastUpdated)}
+                  {formatCacheInfo(cacheMaxAge)}
                 </span>
               </div>
             </div>

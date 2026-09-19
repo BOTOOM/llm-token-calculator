@@ -94,6 +94,13 @@ export function Navbar() {
             Compare Models
           </a>
           <a
+            href={getHref('all-models')}
+            onClick={(e) => handleNavClick(e, 'all-models')}
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            All Models
+          </a>
+          <a
             href={getHref('how-it-works')}
             onClick={(e) => handleNavClick(e, 'how-it-works')}
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -182,6 +189,13 @@ export function Navbar() {
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               Compare Models
+            </a>
+            <a
+              href={getHref('all-models')}
+              onClick={(e) => handleNavClick(e, 'all-models')}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              All Models
             </a>
             <a
               href={getHref('how-it-works')}

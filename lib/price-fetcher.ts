@@ -9,87 +9,148 @@ export const PRICE_CACHE_MAX_AGE = 3600 // seconds
 let cachedPrices: ModelPrice[] | null = null
 let cacheTime = 0
 
-// ─── Provider display name mapping ────────────────────────────────────────────
+// ─── Provider allowlist ───────────────────────────────────────────────────────
+// We only surface models coming from these canonical `litellm_provider` keys.
+// This drops the thousands of re-hosted duplicates (azure/*, bedrock regional
+// mirrors, databricks/*, deepinfra/*, vertex_ai mirrors, ...) that otherwise
+// bury the actual latest models.
 const providerMap: Record<string, string> = {
   openai: 'OpenAI',
   anthropic: 'Anthropic',
-  vertex_ai: 'Google',
-  'vertex_ai-language-models': 'Google',
   gemini: 'Google',
-  bedrock: 'AWS Bedrock',
-  bedrock_converse: 'AWS Bedrock',
+  xai: 'xAI',
   mistral: 'Mistral',
-  together_ai: 'Together AI',
-  groq: 'Groq',
+  codestral: 'Mistral',
   deepseek: 'DeepSeek',
-  fireworks_ai: 'Fireworks',
-  cohere: 'Cohere',
-  ai21: 'AI21',
-  replicate: 'Replicate',
+  groq: 'Groq',
   perplexity: 'Perplexity',
+  cohere: 'Cohere',
+  cohere_chat: 'Cohere',
+  amazon_nova: 'AWS Bedrock',
 }
 
-// ─── Curated model allowlist (regex patterns) ─────────────────────────────────
-const INCLUDED_PATTERNS = [
-  /^gpt-4/, /^gpt-5/, /^o1/, /^o3/, /^o4/,
-  /^claude-3/, /^claude-4/, /^claude-sonnet/, /^claude-opus/,
-  /^gemini-2/, /^gemini-3/,
-  /^mistral-large/, /^mistral-small/, /^codestral/, /^ministral/,
-  /^deepseek/,
-  /^llama-4/, /^llama-3\.3/, /^llama3/,
-  /^qwen/, /^qwq/,
-  /^nova/, /^titan/,
-]
-
+// ─── Noise blocklist ───────────────────────────────────────────────────────────
+// Non-chat endpoints and internal/experimental codenames that should never show
+// up in a pricing comparison.
 const EXCLUDED_TERMS = [
   'dall-e', 'image', 'embedding', 'moderation', 'tts', 'whisper', 'realtime',
+  'audio', 'transcribe', 'deep-research', 'search-api', 'search-preview',
+  'computer-use', 'codex', 'moderation',
+]
+
+// Anchored experimental / internal codenames (matched against the cleaned id).
+const EXCLUDED_PATTERNS = [
+  /daybreak/, /rosalind/, /astra/, /fable/, /mythos/, /vibe-cli/,
+  /robotics/, /omni/, /nightly/, /gemma/, /-exp$/, /-exp-/,
+  /-(sol|terra|luna|cyber)$/, /gigachat/, /research$/,
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function resolveProvider(data: LiteLLMModelData): string {
   const key = (data.litellm_provider ?? '').toLowerCase()
-  return providerMap[key] ?? key.charAt(0).toUpperCase() + key.slice(1)
+  return providerMap[key] ?? ''
 }
 
+// Normalize a raw LiteLLM model id into a clean, canonical, human-friendly id.
 function cleanModelId(modelId: string): string {
-  return modelId
-    .replace(/^(openai\/|anthropic\/|vertex_ai\/|bedrock\/|groq\/)/, '')
-    .replace(/-20\d{6}$/, '')
-    .replace(/:0$/, '')
+  let s = modelId
+  // Strip a leading "provider/" slug (xai/, openai/, amazon-nova/, ...)
+  s = s.replace(/^[a-z0-9_-]+\//i, '')
+  // Strip dotted region / vendor prefixes (us., eu., apac., amazon., ...)
+  s = s.replace(/^(us|eu|apac|au|jp|global|sa|ca|me)\./i, '')
+  s = s.replace(/^amazon\./i, '')
+  // Strip bedrock-style version + inference suffixes
+  s = s.replace(/-v\d+(:\d+)?$/i, '')
+  s = s.replace(/:\d+$/, '')
+  // Strip trailing marketing / tooling suffixes
+  s = s.replace(/-customtools$/i, '')
+  s = s.replace(/@default$/i, '')
+  s = s.replace(/-latest$/i, '')
+  s = s.replace(/-preview$/i, '')
+  // Strip date-stamped variants (keep the canonical rolling name)
+  s = s.replace(/[-@]20\d{6}$/, '')            // -20250514
+  s = s.replace(/[-@]\d{4}-\d{2}-\d{2}$/, '')  // -2025-05-14
+  s = s.replace(/-\d{2}-\d{4}$/, '')           // -08-2024
+  s = s.replace(/-\d{2}-\d{2}$/, '')           // -06-17
+  s = s.replace(/-preview$/i, '')              // trailing preview exposed after date strip
+  s = s.replace(/-\d{4}$/, '')                 // -2405 / -2508 / -0125 (MMYY/YYMM)
+  return s
 }
 
-function buildDisplayName(modelId: string): string {
-  return cleanModelId(modelId)
+function buildDisplayName(cleanId: string): string {
+  return cleanId
     .split(/[-_]/)
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .map(w => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
     .join(' ')
-    .replace(/Gpt/g, 'GPT')
+    .replace(/\bGpt\b/g, 'GPT')
+    .replace(/\bLlama\b/g, 'Llama')
+    .replace(/\bDeepseek\b/g, 'DeepSeek')
+    .replace(/\bQwq\b/g, 'QwQ')
     .replace(/^O(\d)/, 'o$1')
+    .replace(/\bAi\b/g, 'AI')
 }
 
-function shouldInclude(modelId: string, data: LiteLLMModelData): boolean {
+function shouldInclude(cleanId: string, data: LiteLLMModelData): boolean {
+  if (!resolveProvider(data)) return false
   if (data.mode && !['chat', 'completion'].includes(data.mode)) return false
   if (!data.input_cost_per_token && !data.output_cost_per_token) return false
 
-  const id = cleanModelId(modelId).toLowerCase()
+  const id = cleanId.toLowerCase()
+  // Reject anything that failed to normalize into a clean canonical id
+  if (id.includes('/') || id.includes(':') || id.includes('@')) return false
+  if (/(^|-)beta(-|$)|-thinking$/.test(id)) return false
+  if (/[-.]20\d{6}|\d{4}-\d{2}-\d{2}/.test(id)) return false
+  // Drop leftover date-snapshot segments (e.g. -0309, -0125, -2508)
+  if (/-\d{3,4}(-|$)/.test(id)) return false
+  // Drop explicit reasoning/non-reasoning split variants; the base model stays
+  if (/-non-reasoning$|-reasoning$/.test(id)) return false
   if (EXCLUDED_TERMS.some(t => id.includes(t))) return false
+  if (EXCLUDED_PATTERNS.some(p => p.test(id))) return false
 
-  return INCLUDED_PATTERNS.some(p => p.test(id))
+  return true
 }
 
+function isReasoningModel(id: string, data: LiteLLMModelData): boolean {
+  return Boolean(
+    data.supports_reasoning ||
+      /^o\d/.test(id) ||
+      /reasoner|reasoning|-r1|-r\d|thinking|magistral|qwq|sonar-reasoning|grok-4/.test(id),
+  )
+}
+
+function isCodingModel(id: string): boolean {
+  return /codestral|coder|devstral|code(-|$)|codellama/.test(id)
+}
+
+const FLAGSHIP_PATTERNS = [
+  /^gpt-5(\.\d+)?$/, /^gpt-5(\.\d+)?-pro$/, /^o3$/, /^o3-pro$/,
+  /^claude-opus/, /^claude-.*sonnet.*$/, /^grok-4/, /^gemini-3.*pro/,
+  /^gemini-2\.5-pro/, /^mistral-large/, /^deepseek-(r1|v4-pro|reasoner)/,
+  /^nova-pro/, /^command-a/, /^command-r-plus/,
+]
+
+const POPULAR_PATTERNS = [
+  /^gpt-5-mini$/, /^gpt-4o-mini$/, /^gpt-4\.1-mini$/,
+  /^claude-.*haiku/, /^claude-sonnet-4/, /^gemini-2\.5-flash$/,
+  /^gemini-3.*flash/, /^deepseek-chat$/, /^grok-3-mini/, /^mistral-small/,
+  /^nova-lite/,
+]
+
 function parseModel(modelId: string, data: LiteLLMModelData): ModelPrice | null {
-  if (!shouldInclude(modelId, data)) return null
+  const cleanId = cleanModelId(modelId)
+  if (!shouldInclude(cleanId, data)) return null
 
   const inputPricePer1M = (data.input_cost_per_token ?? 0) * 1_000_000
   const outputPricePer1M = (data.output_cost_per_token ?? 0) * 1_000_000
   if (inputPricePer1M === 0 && outputPricePer1M === 0) return null
 
-  const id = cleanModelId(modelId)
+  const lowerId = cleanId.toLowerCase()
+  const reasoning = isReasoningModel(lowerId, data)
 
   return {
     provider: resolveProvider(data),
-    model: id,
-    displayName: buildDisplayName(modelId),
+    model: cleanId,
+    displayName: buildDisplayName(cleanId),
     inputPricePer1M,
     outputPricePer1M,
     cachedInputPricePer1M: data.cache_read_input_token_cost
@@ -99,16 +160,24 @@ function parseModel(modelId: string, data: LiteLLMModelData): ModelPrice | null 
     maxOutputTokens: data.max_output_tokens,
     supportsVision: data.supports_vision,
     supportsFunctionCalling: data.supports_function_calling,
-    isReasoning:
-      data.supports_reasoning ||
-      modelId.includes('o1') ||
-      modelId.includes('o3') ||
-      modelId.includes('reasoning'),
-    isPopular: ['gpt-4o-mini', 'claude-3-5-sonnet', 'gemini-2.0-flash', 'deepseek-chat'].some(
-      m => modelId.includes(m),
-    ),
-    isFlagship: ['gpt-5', 'claude-4', 'o3', 'gemini-3'].some(m => modelId.includes(m)),
+    supportsStreaming: data.mode === 'chat' || data.mode === undefined,
+    supportsJSON: Boolean(data.supports_response_schema),
+    isMultimodal: data.supports_vision,
+    isReasoning: reasoning,
+    isCoding: isCodingModel(lowerId),
+    isPopular: POPULAR_PATTERNS.some(p => p.test(lowerId)),
+    isFlagship: FLAGSHIP_PATTERNS.some(p => p.test(lowerId)),
   }
+}
+
+// Prefer the entry that carries richer metadata when the same canonical id
+// appears more than once (e.g. a plain vs. a context-window-bearing variant).
+function score(m: ModelPrice): number {
+  let s = 0
+  if (m.contextWindow) s += 2
+  if (m.maxOutputTokens) s += 1
+  if (m.supportsVision !== undefined) s += 1
+  return s
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
@@ -124,24 +193,27 @@ export async function getModelPrices(): Promise<{ models: ModelPrice[]; source: 
     if (!res.ok) throw new Error(`Upstream ${res.status}`)
 
     const data: LiteLLMPricingResponse = await res.json()
-    const seen = new Set<string>()
-    const models: ModelPrice[] = []
+    const byKey = new Map<string, ModelPrice>()
 
     for (const [id, d] of Object.entries(data)) {
       if (id === 'sample_spec') continue
       const parsed = parseModel(id, d as LiteLLMModelData)
       if (!parsed) continue
       const key = `${parsed.provider}:${parsed.model}`
-      if (seen.has(key)) continue
-      seen.add(key)
-      models.push(parsed)
+      const existing = byKey.get(key)
+      if (!existing || score(parsed) > score(existing)) {
+        byKey.set(key, parsed)
+      }
     }
 
-    models.sort((a, b) =>
+    const models = [...byKey.values()].sort((a, b) =>
       a.provider !== b.provider
         ? a.provider.localeCompare(b.provider)
         : a.displayName.localeCompare(b.displayName),
     )
+
+    // Guard against an unexpectedly empty/broken upstream payload
+    if (models.length < 20) throw new Error('Upstream returned too few models')
 
     cachedPrices = models
     cacheTime = now

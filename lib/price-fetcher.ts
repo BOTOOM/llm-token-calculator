@@ -10,14 +10,18 @@ let cachedPrices: ModelPrice[] | null = null
 let cacheTime = 0
 
 // ─── Provider allowlist ───────────────────────────────────────────────────────
-// We only surface models coming from these canonical `litellm_provider` keys.
-// This drops the thousands of re-hosted duplicates (azure/*, bedrock regional
-// mirrors, databricks/*, deepinfra/*, vertex_ai mirrors, ...) that otherwise
-// bury the actual latest models.
+// We surface models from every company that publishes its own models directly
+// under a canonical `litellm_provider` key. We still skip pure resale/infra
+// platforms (azure/*, bedrock regional mirrors, vertex_ai mirrors, openrouter,
+// fireworks_ai, together_ai, deepinfra, ...) because they only re-host models
+// already captured under their originating company above, and including them
+// too would just triple/quadruple the same underlying model.
 const providerMap: Record<string, string> = {
   openai: 'OpenAI',
+  'text-completion-openai': 'OpenAI',
   anthropic: 'Anthropic',
   gemini: 'Google',
+  palm: 'Google',
   xai: 'xAI',
   mistral: 'Mistral',
   codestral: 'Mistral',
@@ -26,23 +30,43 @@ const providerMap: Record<string, string> = {
   perplexity: 'Perplexity',
   cohere: 'Cohere',
   cohere_chat: 'Cohere',
-  amazon_nova: 'AWS Bedrock',
+  amazon_nova: 'Amazon',
+  meta: 'Meta',
+  ai21: 'AI21 Labs',
+  moonshot: 'Moonshot AI',
+  minimax: 'MiniMax',
+  zai: 'Zhipu AI',
+  snowflake: 'Snowflake',
+  tencent: 'Tencent',
+  watsonx: 'IBM',
+  qwen_ai_platform: 'Alibaba',
+  dashscope: 'Alibaba',
+  inception: 'Inception Labs',
+  'text-completion-inception': 'Inception Labs',
+  morph: 'Morph',
+  v0: 'Vercel',
+  cerebras: 'Cerebras',
+  nlp_cloud: 'NLP Cloud',
+  cognition: 'Cognition',
+  databricks: 'Databricks',
+  friendliai: 'FriendliAI',
 }
 
 // ─── Noise blocklist ───────────────────────────────────────────────────────────
-// Non-chat endpoints and internal/experimental codenames that should never show
-// up in a pricing comparison.
+// Non-chat endpoints that should never show up in a pricing comparison. Real
+// model families (Gemma, GigaChat, etc.) are intentionally NOT excluded here —
+// only actual non-text API modes and internal test/placeholder codenames are.
 const EXCLUDED_TERMS = [
   'dall-e', 'image', 'embedding', 'moderation', 'tts', 'whisper', 'realtime',
   'audio', 'transcribe', 'deep-research', 'search-api', 'search-preview',
-  'computer-use', 'codex', 'moderation',
+  'computer-use', 'codex',
 ]
 
-// Anchored experimental / internal codenames (matched against the cleaned id).
+// Anchored internal/placeholder test codenames (matched against the cleaned
+// id) that are not real publicly-billable models.
 const EXCLUDED_PATTERNS = [
   /daybreak/, /rosalind/, /astra/, /fable/, /mythos/, /vibe-cli/,
-  /robotics/, /omni/, /nightly/, /gemma/, /-exp$/, /-exp-/,
-  /-(sol|terra|luna|cyber)$/, /gigachat/, /research$/,
+  /robotics/, /nightly/,
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

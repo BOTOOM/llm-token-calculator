@@ -32,13 +32,13 @@ const providerMap: Record<string, string> = {
   cohere_chat: 'Cohere',
   amazon_nova: 'Amazon',
   meta: 'Meta',
+  meta_llama: 'Meta',
   ai21: 'AI21 Labs',
   moonshot: 'Moonshot AI',
   minimax: 'MiniMax',
   zai: 'Zhipu AI',
   snowflake: 'Snowflake',
   tencent: 'Tencent',
-  watsonx: 'IBM',
   qwen_ai_platform: 'Alibaba',
   dashscope: 'Alibaba',
   inception: 'Inception Labs',
@@ -48,8 +48,57 @@ const providerMap: Record<string, string> = {
   cerebras: 'Cerebras',
   nlp_cloud: 'NLP Cloud',
   cognition: 'Cognition',
-  databricks: 'Databricks',
   friendliai: 'FriendliAI',
+}
+
+// ─── Mixed-hosting platforms ─────────────────────────────────────────────────
+// Bedrock and watsonx are umbrellas that re-host many companies' models
+// (Anthropic, Meta, Mistral, Cohere, AI21, ...) which we already capture
+// directly under their real company above — pulling those in again from here
+// would just duplicate them under the wrong brand. But both platforms also
+// carry each host's OWN first-party models, which appear nowhere else in the
+// feed, so we parse the vendor segment out of the raw id and keep only those.
+const BEDROCK_VENDOR_MAP: Record<string, string> = {
+  amazon: 'Amazon', // Titan, Nova
+  writer: 'Writer', // Palmyra
+}
+const WATSONX_VENDOR_MAP: Record<string, string> = {
+  ibm: 'IBM', // Granite
+  core42: 'Core42', // Jais
+  sdaia: 'SDAIA', // Allam
+}
+
+// Resolve which company actually owns a model and the id fragment to clean.
+// Returns null when the model belongs to a resale/infra platform we skip.
+function resolveProviderAndId(rawId: string, data: LiteLLMModelData): { provider: string; workingId: string } | null {
+  const key = (data.litellm_provider ?? '').toLowerCase()
+
+  if (providerMap[key]) {
+    return { provider: providerMap[key], workingId: rawId }
+  }
+
+  if (key === 'bedrock' || key === 'bedrock_converse' || key === 'bedrock_mantle') {
+    let id = rawId.replace(/^bedrock\//i, '')
+    id = id.replace(/^(us|eu|apac|au|jp|global|sa|ca|me)-gov-[a-z0-9-]+\//i, '')
+    id = id.replace(/^(us|eu|apac|au|jp|global|sa|ca|me)\./i, '')
+    id = id.replace(/^\d+-month-commitment\//i, '')
+    const match = id.match(/^([a-z0-9]+)\.(.+)$/i)
+    if (!match) return null
+    const provider = BEDROCK_VENDOR_MAP[match[1].toLowerCase()]
+    if (!provider) return null
+    return { provider, workingId: match[2] }
+  }
+
+  if (key === 'watsonx') {
+    const id = rawId.replace(/^watsonx\//i, '')
+    const match = id.match(/^([a-z0-9]+)\/(.+)$/i)
+    if (!match) return null
+    const provider = WATSONX_VENDOR_MAP[match[1].toLowerCase()]
+    if (!provider) return null
+    return { provider, workingId: match[2] }
+  }
+
+  return null
 }
 
 // ─── Noise blocklist ───────────────────────────────────────────────────────────
@@ -66,14 +115,10 @@ const EXCLUDED_TERMS = [
 // id) that are not real publicly-billable models.
 const EXCLUDED_PATTERNS = [
   /daybreak/, /rosalind/, /astra/, /fable/, /mythos/, /vibe-cli/,
-  /robotics/, /nightly/,
+  /robotics/, /nightly/, /guardian/, /-ttm-/,
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function resolveProvider(data: LiteLLMModelData): string {
-  const key = (data.litellm_provider ?? '').toLowerCase()
-  return providerMap[key] ?? ''
-}
 
 // Normalize a raw LiteLLM model id into a clean, canonical, human-friendly id.
 function cleanModelId(modelId: string): string {
@@ -115,7 +160,6 @@ function buildDisplayName(cleanId: string): string {
 }
 
 function shouldInclude(cleanId: string, data: LiteLLMModelData): boolean {
-  if (!resolveProvider(data)) return false
   if (data.mode && !['chat', 'completion'].includes(data.mode)) return false
   if (!data.input_cost_per_token && !data.output_cost_per_token) return false
 
@@ -161,7 +205,11 @@ const POPULAR_PATTERNS = [
 ]
 
 function parseModel(modelId: string, data: LiteLLMModelData): ModelPrice | null {
-  const cleanId = cleanModelId(modelId)
+  const resolved = resolveProviderAndId(modelId, data)
+  if (!resolved) return null
+  const { provider, workingId } = resolved
+
+  const cleanId = cleanModelId(workingId)
   if (!shouldInclude(cleanId, data)) return null
 
   const inputPricePer1M = (data.input_cost_per_token ?? 0) * 1_000_000
@@ -172,7 +220,7 @@ function parseModel(modelId: string, data: LiteLLMModelData): ModelPrice | null 
   const reasoning = isReasoningModel(lowerId, data)
 
   return {
-    provider: resolveProvider(data),
+    provider,
     model: cleanId,
     displayName: buildDisplayName(cleanId),
     inputPricePer1M,

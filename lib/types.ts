@@ -108,6 +108,7 @@ export interface LiteLLMModelData {
   supports_vision?: boolean
   supports_function_calling?: boolean
   supports_reasoning?: boolean
+  supports_response_schema?: boolean
   cache_read_input_token_cost?: number
 }
 

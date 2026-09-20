@@ -7,6 +7,7 @@ import { TokenCountCards } from './token-count-cards'
 import { UsageProjections } from './usage-projections'
 import { CheapestOption } from './cheapest-option'
 import { ComparisonTable } from './comparison-table'
+import { ModelComparison } from './model-comparison'
 import { countTokens, estimateTokens } from '@/lib/tokenizer'
 import { calculateCostEstimates, findCheapestModel } from '@/lib/calculator'
 import { fallbackModelPrices } from '@/lib/model-prices'
@@ -246,8 +247,18 @@ export function Calculator() {
           </div>
         </div>
 
-        {/* Comparison table */}
-        <div id="comparison" className="mt-12">
+        {/* Side-by-side model comparison */}
+        <div id="comparison" className="mt-12 scroll-mt-20">
+          <ModelComparison
+            models={models}
+            inputTokens={effectiveInputTokens}
+            outputTokens={effectiveOutputTokens}
+            usage={usage}
+          />
+        </div>
+
+        {/* Full model matrix */}
+        <div id="all-models" className="mt-12 scroll-mt-20">
           <ComparisonTable 
             estimates={costEstimates} 
             priceSource={priceData?.source}

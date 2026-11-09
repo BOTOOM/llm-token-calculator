@@ -20,6 +20,7 @@ export interface ModelPrice extends ModelCapabilities {
   isPopular?: boolean
   isFlagship?: boolean
   isLatest?: boolean
+  mirrorCount?: number
   description?: string
 }
 

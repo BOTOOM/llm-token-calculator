@@ -1,5 +1,5 @@
 import { fallbackModelPrices } from '@/lib/model-prices'
-import { annotateModels } from '@/lib/model-selection'
+import { annotateModels, parseModelVersion } from '@/lib/model-selection'
 import type { ModelPrice, LiteLLMPricingResponse, LiteLLMModelData } from '@/lib/types'
 
 const LITELLM_URL = 'https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json'
@@ -65,6 +65,10 @@ function prettifyProvider(key: string): string {
   return key.split(/[-_]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
 }
 
+function isResaleProvider(key: string): boolean {
+  return /^(azure|vertex_ai|fireworks_ai)/.test(key) || RESALE_PROVIDERS.has(key)
+}
+
 // ─── Mixed-hosting platforms ─────────────────────────────────────────────────
 // Bedrock and watsonx are umbrellas that re-host many companies' models
 // (Anthropic, Meta, Mistral, Cohere, AI21, ...) which we already capture
@@ -108,7 +112,7 @@ function resolveProviderAndId(rawId: string, data: LiteLLMModelData): { provider
     return { provider, workingId: match[2] }
   }
 
-  if (!key || key.includes('https://') || /^(azure|vertex_ai|fireworks_ai)/.test(key) || RESALE_PROVIDERS.has(key)) return null
+  if (!key || key.includes('https://') || isResaleProvider(key)) return null
   return { provider: providerNames[key] ?? prettifyProvider(key), workingId: rawId }
 }
 
@@ -161,6 +165,39 @@ function buildDisplayName(cleanId: string): string {
     .replace(/\bQwq\b/g, 'QwQ')
     .replace(/^O(\d)/, 'o$1')
     .replace(/\bAi\b/g, 'AI')
+    .replace(/\b(?:a?\d+(?:\.\d+)?(?:x\d+(?:\.\d+)?)?b)\b/gi, size => size.replace(/b$/i, 'B'))
+}
+
+function addMirrorCounts(models: ModelPrice[], feed: LiteLLMPricingResponse): ModelPrice[] {
+  const owners = new Map<string, Set<string>>()
+  for (const model of models) {
+    const { family } = parseModelVersion(model.model)
+    for (const alias of [family, family.split('-')[0]]) {
+      if (!alias) continue
+      const providers = owners.get(alias) ?? new Set<string>()
+      providers.add(model.provider)
+      owners.set(alias, providers)
+    }
+  }
+  const aliases = [...owners.entries()].map(([alias, providers]) => ({
+    alias, providers,
+    pattern: new RegExp(`^${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=$|[^a-z]|\\d)`, 'i'),
+  })).sort((a, b) => b.alias.length - a.alias.length)
+  const counts = new Map<string, number>()
+  for (const [id, data] of Object.entries(feed)) {
+    const key = (data.litellm_provider ?? '').toLowerCase()
+    const mixedHost = /^(bedrock(?:_|$)|watsonx$)/.test(key)
+    if (!isResaleProvider(key) && !mixedHost) continue
+    if (mixedHost && resolveProviderAndId(id, data)) continue
+    if (data.mode && !['chat', 'completion', 'responses'].includes(data.mode)) continue
+    if (!data.input_cost_per_token && !data.output_cost_per_token) continue
+    const modelId = id.split('/').pop()!.replace(/^(?:[a-z][a-z_-]*\.)+/i, '').replace(/_/g, '-')
+    const match = aliases.find(({ pattern }) => pattern.test(modelId))
+    if (!match || match.providers.size !== 1) continue
+    const provider = [...match.providers][0]
+    counts.set(provider, (counts.get(provider) ?? 0) + 1)
+  }
+  return models.map(model => ({ ...model, mirrorCount: counts.get(model.provider) ?? 0 }))
 }
 
 function shouldInclude(cleanId: string, data: LiteLLMModelData): boolean {
@@ -265,7 +302,7 @@ export async function getModelPrices(): Promise<{ models: ModelPrice[]; source: 
       }
     }
 
-    const models = annotateModels([...byKey.values()]).sort((a, b) =>
+    const models = annotateModels(addMirrorCounts([...byKey.values()], data)).sort((a, b) =>
       a.provider !== b.provider
         ? a.provider.localeCompare(b.provider)
         : a.displayName.localeCompare(b.displayName),

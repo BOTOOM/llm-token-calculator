@@ -1,9 +1,13 @@
 import type { ModelPrice } from './types'
 
 export function parseModelVersion(id: string): { family: string; version: number[]; suffix: string } {
-  const match = id.toLowerCase().match(/^([a-z]+(?:-[a-z]+)*)-?(\d+(?:[.-]\d+)*)(.*)$/)
-  if (!match) return { family: id.toLowerCase(), version: [], suffix: '' }
-  return { family: match[1], version: match[2].split(/[.-]/).map(Number), suffix: match[3].replace(/^-/, '') }
+  const lowerId = id.toLowerCase()
+  const size = lowerId.search(/(?:^|-)(?:a?\d+(?:\.\d+)?(?:x\d+(?:\.\d+)?)?b)(?=-|$)/)
+  const prefix = size < 0 ? lowerId : lowerId.slice(0, size)
+  const sizeSuffix = size < 0 ? '' : lowerId.slice(size).replace(/^-/, '')
+  const match = prefix.match(/^([a-z]+(?:-[a-z]+)*)-?(\d+(?:[.-]\d+)*)(.*)$/)
+  if (!match) return { family: prefix, version: [], suffix: sizeSuffix }
+  return { family: match[1], version: match[2].split(/[.-]/).map(Number), suffix: [match[3].replace(/^-/, ''), sizeSuffix].filter(Boolean).join('-') }
 }
 
 export function compareVersions(a: number[], b: number[]): number {
@@ -37,10 +41,19 @@ export function annotateModels(models: ModelPrice[]): ModelPrice[] {
   return result
 }
 
+export function rankProviders(models: ModelPrice[]): { provider: string; mirrorCount: number; modelCount: number }[] {
+  const counts = new Map<string, { provider: string; mirrorCount: number; modelCount: number }>()
+  for (const model of models) {
+    const entry = counts.get(model.provider) ?? { provider: model.provider, mirrorCount: 0, modelCount: 0 }
+    entry.modelCount++
+    entry.mirrorCount = Math.max(entry.mirrorCount, model.mirrorCount ?? 0)
+    counts.set(model.provider, entry)
+  }
+  return [...counts.values()].sort((a, b) => b.mirrorCount - a.mirrorCount || b.modelCount - a.modelCount || a.provider.localeCompare(b.provider))
+}
+
 export function topProviderFlagships(models: ModelPrice[], limit = 3): ModelPrice[] {
-  const counts = new Map<string, number>()
-  for (const model of models) counts.set(model.provider, (counts.get(model.provider) ?? 0) + 1)
-  const providers = [...counts.keys()].sort((a, b) => counts.get(b)! - counts.get(a)! || a.localeCompare(b))
+  const providers = rankProviders(models).map(entry => entry.provider)
   return providers.flatMap(provider => {
     const candidates = models.filter(model => model.provider === provider && model.isFlagship && model.isLatest)
     candidates.sort((a, b) => compareVersions(parseModelVersion(b.model).version, parseModelVersion(a.model).version) || b.outputPricePer1M - a.outputPricePer1M || a.model.localeCompare(b.model))

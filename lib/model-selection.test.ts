@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { annotateModels, compareVersions, heroBadgeText, parseModelVersion, pickDefaults } from './model-selection'
+import { annotateModels, compareVersions, heroBadgeText, parseModelVersion, pickDefaults, rankProviders } from './model-selection'
 import type { ModelPrice } from './types'
 
 const model = (id: string, price = 1, provider = 'Example'): ModelPrice => ({
@@ -14,6 +14,16 @@ test('versions use numeric tuples and preserve family and suffix', () => {
   assert.deepEqual(parseModelVersion('gemini-3.8-flash'), { family: 'gemini', version: [3, 8], suffix: 'flash' })
   assert.equal(compareVersions(parseModelVersion('grok-4.20').version, [4, 9]) > 0, true)
   assert.deepEqual(parseModelVersion('unversioned').version, [])
+})
+
+test('parameter sizes are suffixes, not versions', () => {
+  for (const size of ['14b', '8b', '70b', '1.5b', 'a3b', '235b-a22b', '8x7b']) {
+    assert.deepEqual(parseModelVersion(`example-${size}`), { family: 'example', version: [], suffix: size })
+    assert.deepEqual(parseModelVersion(`example-3-${size}`), { family: 'example', version: [3], suffix: size })
+  }
+  assert.deepEqual(parseModelVersion('ministral-14b'), { family: 'ministral', version: [], suffix: '14b' })
+  assert.deepEqual(parseModelVersion('qwen3-235b-a22b'), { family: 'qwen', version: [3], suffix: '235b-a22b' })
+  assert.deepEqual(parseModelVersion('llama-3.1-70b'), { family: 'llama', version: [3, 1], suffix: '70b' })
 })
 
 test('flags select the most expensive and cheapest latest models per provider and family', () => {
@@ -38,4 +48,17 @@ test('defaults and badge prefer newest flagships from distinct providers by cata
   assert.deepEqual(pickDefaults([]), [])
   assert.equal(heroBadgeText([]), 'Explore live model pricing')
   assert.deepEqual(pickDefaults([model('unversioned')]), ['Example:unversioned'])
+})
+
+test('mirror demand takes priority over catalogue size, with deterministic fallbacks', () => {
+  const models = annotateModels([
+    model('family-2'), model('family-3'), model('family-4'),
+    { ...model('other-1', 1, 'Demanded'), mirrorCount: 5 },
+    { ...model('third-1', 1, 'Third'), mirrorCount: 2 },
+    { ...model('fourth-1', 1, 'Fourth'), mirrorCount: 2 },
+  ])
+  assert.deepEqual(rankProviders(models).map(m => m.provider), ['Demanded', 'Fourth', 'Third', 'Example'])
+  assert.deepEqual(pickDefaults(models), ['Demanded:other-1', 'Fourth:fourth-1', 'Third:third-1'])
+  assert.equal(heroBadgeText(models), 'Now supporting other-1, fourth-1, third-1 & more')
+  assert.deepEqual(rankProviders([]), [])
 })

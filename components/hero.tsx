@@ -3,10 +3,20 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Sparkles, Github, Heart } from 'lucide-react'
+import useSWR from 'swr'
+import { heroBadgeText } from '@/lib/model-selection'
+import type { ModelPrice } from '@/lib/types'
 
 const GITHUB_REPO = 'https://github.com/BOTOOM/llm-token-calculator'
 
-export function Hero() {
+const fetcher = (url: string) => fetch(url).then(res => res.json())
+
+export function Hero({ initialModels }: { initialModels: ModelPrice[] }) {
+  const { data } = useSWR('/api/model-prices', fetcher, {
+    fallbackData: { models: initialModels },
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  })
   return (
     <section className="relative overflow-hidden pb-16 pt-20 md:pb-24 md:pt-32">
       {/* Background gradient effects - adaptive to theme */}
@@ -23,7 +33,7 @@ export function Hero() {
             className="mb-6 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           >
             <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-            Now supporting GPT-5.4, Gemini 3.1, Claude 4.6 & more
+            {heroBadgeText(data?.models ?? initialModels)}
           </Badge>
 
           <h1 className="mb-6 text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">

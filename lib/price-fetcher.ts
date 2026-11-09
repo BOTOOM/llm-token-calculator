@@ -1,4 +1,5 @@
 import { fallbackModelPrices } from '@/lib/model-prices'
+import { annotateModels, parseModelVersion } from '@/lib/model-selection'
 import type { ModelPrice, LiteLLMPricingResponse, LiteLLMModelData } from '@/lib/types'
 
 const LITELLM_URL = 'https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json'
@@ -9,14 +10,7 @@ export const PRICE_CACHE_MAX_AGE = 3600 // seconds
 let cachedPrices: ModelPrice[] | null = null
 let cacheTime = 0
 
-// ─── Provider allowlist ───────────────────────────────────────────────────────
-// We surface models from every company that publishes its own models directly
-// under a canonical `litellm_provider` key. We still skip pure resale/infra
-// platforms (azure/*, bedrock regional mirrors, vertex_ai mirrors, openrouter,
-// fireworks_ai, together_ai, deepinfra, ...) because they only re-host models
-// already captured under their originating company above, and including them
-// too would just triple/quadruple the same underlying model.
-const providerMap: Record<string, string> = {
+const providerNames: Record<string, string> = {
   openai: 'OpenAI',
   'text-completion-openai': 'OpenAI',
   anthropic: 'Anthropic',
@@ -25,6 +19,7 @@ const providerMap: Record<string, string> = {
   xai: 'xAI',
   mistral: 'Mistral',
   codestral: 'Mistral',
+  'text-completion-codestral': 'Mistral',
   deepseek: 'DeepSeek',
   groq: 'Groq',
   perplexity: 'Perplexity',
@@ -49,6 +44,29 @@ const providerMap: Record<string, string> = {
   nlp_cloud: 'NLP Cloud',
   cognition: 'Cognition',
   friendliai: 'FriendliAI',
+  bigmodel: 'Zhipu AI',
+}
+
+const RESALE_PROVIDERS = new Set([
+  'openrouter', 'together_ai', 'deepinfra', 'groq', 'cerebras', 'friendliai',
+  'fal_ai', 'novita', 'gmi', 'vercel_ai_gateway', 'empiriolabs', 'databricks',
+  'kyma', 'aihubmix', 'nebius', 'qwencloud', 'github_copilot', 'oci',
+  'cloudflare', 'replicate', 'baseten', 'inferenceapis', 'wandb', 'opencode_go',
+  'ollama', 'lambda_ai', 'hyperbolic', 'nscale', 'llamagate', 'ovhcloud',
+  'scaleway', 'aiand', 'aiml', 'gradient_ai', 'zerogpu', 'anyscale', 'sail',
+  'libertai', 'tensormesh', 'clf_ai_gateway', 'wally', 'publicai', 'sambanova',
+  'crusoe', 'sagemaker', 'pinstripes', 'lemonade', 'scx-ai', 'scaledown',
+  'refuseless', 'abliteration', 'heroku', 'hostinger_router', 'nace', 'typesafe',
+  'nvidia_nim', 'laya', 'openinfer', 'apiserpent', 'featherless_ai', 'darkbloom',
+  'eu_jev', 'prism', 'chatgpt', 'microsoft_365_copilot',
+])
+
+function prettifyProvider(key: string): string {
+  return key.split(/[-_]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+}
+
+function isResaleProvider(key: string): boolean {
+  return /^(azure|vertex_ai|fireworks_ai)/.test(key) || RESALE_PROVIDERS.has(key)
 }
 
 // ─── Mixed-hosting platforms ─────────────────────────────────────────────────
@@ -73,10 +91,6 @@ const WATSONX_VENDOR_MAP: Record<string, string> = {
 function resolveProviderAndId(rawId: string, data: LiteLLMModelData): { provider: string; workingId: string } | null {
   const key = (data.litellm_provider ?? '').toLowerCase()
 
-  if (providerMap[key]) {
-    return { provider: providerMap[key], workingId: rawId }
-  }
-
   if (key === 'bedrock' || key === 'bedrock_converse' || key === 'bedrock_mantle') {
     let id = rawId.replace(/^bedrock\//i, '')
     id = id.replace(/^(us|eu|apac|au|jp|global|sa|ca|me)-gov-[a-z0-9-]+\//i, '')
@@ -98,24 +112,17 @@ function resolveProviderAndId(rawId: string, data: LiteLLMModelData): { provider
     return { provider, workingId: match[2] }
   }
 
-  return null
+  if (!key || key.includes('https://') || isResaleProvider(key)) return null
+  return { provider: providerNames[key] ?? prettifyProvider(key), workingId: rawId }
 }
 
 // ─── Noise blocklist ───────────────────────────────────────────────────────────
 // Non-chat endpoints that should never show up in a pricing comparison. Real
 // model families (Gemma, GigaChat, etc.) are intentionally NOT excluded here —
-// only actual non-text API modes and internal test/placeholder codenames are.
+// only actual non-text API modes are excluded.
 const EXCLUDED_TERMS = [
   'dall-e', 'image', 'embedding', 'moderation', 'tts', 'whisper', 'realtime',
-  'audio', 'transcribe', 'deep-research', 'search-api', 'search-preview',
-  'computer-use', 'codex',
-]
-
-// Anchored internal/placeholder test codenames (matched against the cleaned
-// id) that are not real publicly-billable models.
-const EXCLUDED_PATTERNS = [
-  /daybreak/, /rosalind/, /astra/, /fable/, /mythos/, /vibe-cli/,
-  /robotics/, /nightly/, /guardian/, /-ttm-/,
+  'audio', 'transcribe', 'search-api',
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -151,16 +158,50 @@ function buildDisplayName(cleanId: string): string {
     .split(/[-_]/)
     .map(w => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
     .join(' ')
+    .replace(/\b\d+(?: \d+)+\b/g, version => version.replace(/ /g, '.'))
     .replace(/\bGpt\b/g, 'GPT')
     .replace(/\bLlama\b/g, 'Llama')
     .replace(/\bDeepseek\b/g, 'DeepSeek')
     .replace(/\bQwq\b/g, 'QwQ')
     .replace(/^O(\d)/, 'o$1')
     .replace(/\bAi\b/g, 'AI')
+    .replace(/\b(?:a?\d+(?:\.\d+)?(?:x\d+(?:\.\d+)?)?b)\b/gi, size => size.replace(/b$/i, 'B'))
+}
+
+function addMirrorCounts(models: ModelPrice[], feed: LiteLLMPricingResponse): ModelPrice[] {
+  const owners = new Map<string, Set<string>>()
+  for (const model of models) {
+    const { family } = parseModelVersion(model.model)
+    for (const alias of [family, family.split('-')[0]]) {
+      if (!alias) continue
+      const providers = owners.get(alias) ?? new Set<string>()
+      providers.add(model.provider)
+      owners.set(alias, providers)
+    }
+  }
+  const aliases = [...owners.entries()].map(([alias, providers]) => ({
+    alias, providers,
+    pattern: new RegExp(`^${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=$|[^a-z]|\\d)`, 'i'),
+  })).sort((a, b) => b.alias.length - a.alias.length)
+  const counts = new Map<string, number>()
+  for (const [id, data] of Object.entries(feed)) {
+    const key = (data.litellm_provider ?? '').toLowerCase()
+    const mixedHost = /^(bedrock(?:_|$)|watsonx$)/.test(key)
+    if (!isResaleProvider(key) && !mixedHost) continue
+    if (mixedHost && resolveProviderAndId(id, data)) continue
+    if (data.mode && !['chat', 'completion', 'responses'].includes(data.mode)) continue
+    if (!data.input_cost_per_token && !data.output_cost_per_token) continue
+    const modelId = id.split('/').pop()!.replace(/^(?:[a-z][a-z_-]*\.)+/i, '').replace(/_/g, '-')
+    const match = aliases.find(({ pattern }) => pattern.test(modelId))
+    if (!match || match.providers.size !== 1) continue
+    const provider = [...match.providers][0]
+    counts.set(provider, (counts.get(provider) ?? 0) + 1)
+  }
+  return models.map(model => ({ ...model, mirrorCount: counts.get(model.provider) ?? 0 }))
 }
 
 function shouldInclude(cleanId: string, data: LiteLLMModelData): boolean {
-  if (data.mode && !['chat', 'completion'].includes(data.mode)) return false
+  if (data.mode && !['chat', 'completion', 'responses'].includes(data.mode)) return false
   if (!data.input_cost_per_token && !data.output_cost_per_token) return false
 
   const id = cleanId.toLowerCase()
@@ -173,7 +214,6 @@ function shouldInclude(cleanId: string, data: LiteLLMModelData): boolean {
   // Drop explicit reasoning/non-reasoning split variants; the base model stays
   if (/-non-reasoning$|-reasoning$/.test(id)) return false
   if (EXCLUDED_TERMS.some(t => id.includes(t))) return false
-  if (EXCLUDED_PATTERNS.some(p => p.test(id))) return false
 
   return true
 }
@@ -182,27 +222,13 @@ function isReasoningModel(id: string, data: LiteLLMModelData): boolean {
   return Boolean(
     data.supports_reasoning ||
       /^o\d/.test(id) ||
-      /reasoner|reasoning|-r1|-r\d|thinking|magistral|qwq|sonar-reasoning|grok-4/.test(id),
+      /reasoner|reasoning|-r\d|thinking|magistral|qwq/.test(id),
   )
 }
 
 function isCodingModel(id: string): boolean {
   return /codestral|coder|devstral|code(-|$)|codellama/.test(id)
 }
-
-const FLAGSHIP_PATTERNS = [
-  /^gpt-5(\.\d+)?$/, /^gpt-5(\.\d+)?-pro$/, /^o3$/, /^o3-pro$/,
-  /^claude-opus/, /^claude-.*sonnet.*$/, /^grok-4/, /^gemini-3.*pro/,
-  /^gemini-2\.5-pro/, /^mistral-large/, /^deepseek-(r1|v4-pro|reasoner)/,
-  /^nova-pro/, /^command-a/, /^command-r-plus/,
-]
-
-const POPULAR_PATTERNS = [
-  /^gpt-5-mini$/, /^gpt-4o-mini$/, /^gpt-4\.1-mini$/,
-  /^claude-.*haiku/, /^claude-sonnet-4/, /^gemini-2\.5-flash$/,
-  /^gemini-3.*flash/, /^deepseek-chat$/, /^grok-3-mini/, /^mistral-small/,
-  /^nova-lite/,
-]
 
 function parseModel(modelId: string, data: LiteLLMModelData): ModelPrice | null {
   const resolved = resolveProviderAndId(modelId, data)
@@ -232,13 +258,11 @@ function parseModel(modelId: string, data: LiteLLMModelData): ModelPrice | null 
     maxOutputTokens: data.max_output_tokens,
     supportsVision: data.supports_vision,
     supportsFunctionCalling: data.supports_function_calling,
-    supportsStreaming: data.mode === 'chat' || data.mode === undefined,
+    supportsStreaming: data.mode === 'chat' || data.mode === 'responses' || data.mode === undefined,
     supportsJSON: Boolean(data.supports_response_schema),
     isMultimodal: data.supports_vision,
     isReasoning: reasoning,
     isCoding: isCodingModel(lowerId),
-    isPopular: POPULAR_PATTERNS.some(p => p.test(lowerId)),
-    isFlagship: FLAGSHIP_PATTERNS.some(p => p.test(lowerId)),
   }
 }
 
@@ -253,6 +277,7 @@ function score(m: ModelPrice): number {
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
+/** Returns cached live prices with derived metadata, or the bundled fallback on upstream failure. */
 export async function getModelPrices(): Promise<{ models: ModelPrice[]; source: string }> {
   const now = Date.now()
 
@@ -261,7 +286,7 @@ export async function getModelPrices(): Promise<{ models: ModelPrice[]; source: 
   }
 
   try {
-    const res = await fetch(LITELLM_URL, { next: { revalidate: PRICE_CACHE_MAX_AGE } })
+    const res = await fetch(LITELLM_URL, { cache: 'no-store' })
     if (!res.ok) throw new Error(`Upstream ${res.status}`)
 
     const data: LiteLLMPricingResponse = await res.json()
@@ -278,7 +303,7 @@ export async function getModelPrices(): Promise<{ models: ModelPrice[]; source: 
       }
     }
 
-    const models = [...byKey.values()].sort((a, b) =>
+    const models = annotateModels(addMirrorCounts([...byKey.values()], data)).sort((a, b) =>
       a.provider !== b.provider
         ? a.provider.localeCompare(b.provider)
         : a.displayName.localeCompare(b.displayName),
@@ -291,6 +316,6 @@ export async function getModelPrices(): Promise<{ models: ModelPrice[]; source: 
     cacheTime = now
     return { models, source: 'LiteLLM' }
   } catch {
-    return { models: fallbackModelPrices, source: 'fallback' }
+    return { models: annotateModels(fallbackModelPrices), source: 'fallback' }
   }
 }

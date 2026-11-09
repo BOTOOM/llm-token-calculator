@@ -3,6 +3,7 @@ import { getModelPrices, PRICE_CACHE_MAX_AGE } from '@/lib/price-fetcher'
 
 // Must be a static literal — Next.js cannot resolve imported constants here
 export const revalidate = 3600
+export const dynamic = 'force-static'
 
 export async function GET() {
   const { models, source } = await getModelPrices()

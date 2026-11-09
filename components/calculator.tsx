@@ -10,12 +10,11 @@ import { ComparisonTable } from './comparison-table'
 import { ModelComparison } from './model-comparison'
 import { countTokens, estimateTokens } from '@/lib/tokenizer'
 import { calculateCostEstimates, findCheapestModel } from '@/lib/calculator'
-import { fallbackModelPrices } from '@/lib/model-prices'
 import type { UsageProjection, ModelPrice } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
-export function Calculator() {
+export function Calculator({ initialModels }: { initialModels: ModelPrice[] }) {
   const [inputText, setInputText] = useState('')
   const [inputTokensManual, setInputTokensManual] = useState(1000)
   const [inputMode, setInputMode] = useState<'text' | 'number'>('text')
@@ -36,12 +35,12 @@ export function Calculator() {
 
   // Fetch model prices from API
   const { data: priceData } = useSWR('/api/model-prices', fetcher, {
-    fallbackData: { models: fallbackModelPrices, source: 'fallback' },
+    fallbackData: { models: initialModels },
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
   })
 
-  const models: ModelPrice[] = priceData?.models || fallbackModelPrices
+  const models: ModelPrice[] = priceData?.models || initialModels
 
   // Calculate token counts with debounce for real counting
   const [inputTokenCounts, setInputTokenCounts] = useState<{ provider: string; displayName: string; tokens: number; isEstimate: boolean }[]>([])

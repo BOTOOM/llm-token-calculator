@@ -26,6 +26,18 @@ test('parameter sizes are suffixes, not versions', () => {
   assert.deepEqual(parseModelVersion('llama-3.1-70b'), { family: 'llama', version: [3, 1], suffix: '70b' })
 })
 
+test('v-prefixed versions share a family and restore the newest flagship', () => {
+  assert.deepEqual(parseModelVersion('deepseek-v4-pro'), { family: 'deepseek', version: [4], suffix: 'pro' })
+  assert.deepEqual(parseModelVersion('deepseek-v3.2'), { family: 'deepseek', version: [3, 2], suffix: '' })
+  assert.deepEqual(parseModelVersion('deepseek-v'), { family: 'deepseek', version: [], suffix: 'v' })
+  assert.deepEqual(parseModelVersion('deepseek-a22b'), { family: 'deepseek', version: [], suffix: 'a22b' })
+  assert.deepEqual(parseModelVersion('deepseek-v4-a22b'), { family: 'deepseek', version: [4], suffix: 'a22b' })
+  const models = annotateModels([model('deepseek-v3.2', 10), model('deepseek-v4-pro', 5), model('deepseek-v4-flash', 1)])
+  assert.deepEqual(models.map(m => [m.isLatest, m.isFlagship, m.isPopular]), [
+    [false, false, false], [true, true, false], [true, false, true],
+  ])
+})
+
 test('flags select the most expensive and cheapest latest models per provider and family', () => {
   const models = annotateModels([
     model('family-4', 100), model('family-5-pro', 10), model('family-5-mini', 1),

@@ -5,8 +5,8 @@ export function parseModelVersion(id: string): { family: string; version: number
   const size = lowerId.search(/(?:^|-)(?:a?\d+(?:\.\d+)?(?:x\d+(?:\.\d+)?)?b)(?=-|$)/)
   const prefix = size < 0 ? lowerId : lowerId.slice(0, size)
   const sizeSuffix = size < 0 ? '' : lowerId.slice(size).replace(/^-/, '')
-  const match = prefix.match(/^([a-z]+(?:-[a-z]+)*)-?(\d+(?:[.-]\d+)*)(.*)$/)
-  if (!match) return { family: prefix, version: [], suffix: sizeSuffix }
+  const match = prefix.match(/^([a-z]+(?:-[a-z]+)*?)(?:-v|-?)(\d+(?:[.-]\d+)*)(.*)$/)
+  if (!match) return { family: prefix.replace(/-v$/, ''), version: [], suffix: [prefix.endsWith('-v') ? 'v' : '', sizeSuffix].filter(Boolean).join('-') }
   return { family: match[1], version: match[2].split(/[.-]/).map(Number), suffix: [match[3].replace(/^-/, ''), sizeSuffix].filter(Boolean).join('-') }
 }
 

@@ -40,6 +40,7 @@ import type { ModelPrice, UsageProjection, CapabilityFilter } from '@/lib/types'
 import { calculateCost, formatCurrency, formatPricePer1M } from '@/lib/calculator'
 import { CAPABILITY_LABELS } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { pickDefaults } from '@/lib/model-selection'
 
 const MAX_MODELS = 5
 
@@ -66,28 +67,6 @@ interface ModelComparisonProps {
   inputTokens: number
   outputTokens: number
   usage: UsageProjection
-}
-
-function pickDefaults(models: ModelPrice[]): string[] {
-  const preferred = ['gpt-5', 'claude-opus-4-6', 'gemini-3-pro', 'grok-4.6', 'claude-opus-4-5']
-  const seeded: string[] = []
-  for (const id of preferred) {
-    const found = models.find(m => m.model === id)
-    if (found && !seeded.includes(modelKey(found))) seeded.push(modelKey(found))
-    if (seeded.length >= 3) break
-  }
-  if (seeded.length < 3) {
-    for (const m of models.filter(m => m.isFlagship)) {
-      const k = modelKey(m)
-      if (!seeded.includes(k)) seeded.push(k)
-      if (seeded.length >= 3) break
-    }
-  }
-  // Guaranteed non-empty fallback: just take the first available models.
-  if (seeded.length === 0) {
-    for (const m of models.slice(0, 3)) seeded.push(modelKey(m))
-  }
-  return seeded.slice(0, MAX_MODELS)
 }
 
 export function ModelComparison({ models, inputTokens, outputTokens, usage }: ModelComparisonProps) {

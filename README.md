@@ -28,7 +28,6 @@ A powerful token counter and cost calculator for LLM APIs. Compare pricing acros
 | Qwen | QwQ, Qwen 2.5, Qwen VL |
 | DeepSeek | V3, R1, Coder V2 |
 | Meta | Llama 4, Llama 3.3 |
-| Groq | Fast inference models |
 | xAI | Grok 2 |
 | Cohere | Command R+ |
 | AI21 | Jamba 1.5 |

@@ -19,6 +19,7 @@ export interface ModelPrice extends ModelCapabilities {
   maxOutputTokens?: number
   isPopular?: boolean
   isFlagship?: boolean
+  isLatest?: boolean
   description?: string
 }
 

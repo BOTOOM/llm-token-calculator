@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { annotateModels, compareVersions, heroBadgeText, parseModelVersion, pickDefaults, rankProviders } from './model-selection'
 import type { ModelPrice } from './types'
+import { fallbackModelPrices } from './model-prices'
 
 const model = (id: string, price = 1, provider = 'Example'): ModelPrice => ({
   model: id, displayName: id, provider, inputPricePer1M: price, outputPricePer1M: price,
@@ -45,9 +46,30 @@ test('flags select the most expensive and cheapest latest models per provider an
   ])
   assert.deepEqual(models.map(m => [m.isLatest, m.isFlagship, m.isPopular]), [
     [false, false, false], [true, true, false], [true, false, true],
-    [true, true, false], [false, false, false], [true, true, false],
+    [true, true, false], [true, true, false], [true, true, false],
   ])
   assert.deepEqual(annotateModels([]), [])
+})
+
+test('unversioned families use the price rule unless a real version exists', () => {
+  const models = annotateModels([model('family-70b', 10), model('family-8b', 1)])
+  assert.deepEqual(models.map(m => [m.isLatest, m.isFlagship, m.isPopular]), [
+    [true, true, false], [true, false, true],
+  ])
+  const mixed = annotateModels([model('family', 100), model('family-70b', 10), model('family-0', 1)])
+  assert.deepEqual(mixed.map(m => [m.isLatest, m.isFlagship, m.isPopular]), [
+    [false, false, false], [false, false, false], [true, true, false],
+  ])
+})
+
+test('fallback models retain unversioned flagships and usable presentation', () => {
+  const models = annotateModels(fallbackModelPrices)
+  for (const id of ['mistral-large', 'command-r-plus']) {
+    assert.equal(models.find(m => m.model === id)?.isLatest, true)
+    assert.equal(models.find(m => m.model === id)?.isFlagship, true)
+  }
+  assert.ok(pickDefaults(models).length > 0)
+  assert.match(heroBadgeText(models), /^Now supporting /)
 })
 
 test('defaults and badge prefer newest flagships from distinct providers by catalogue size', () => {

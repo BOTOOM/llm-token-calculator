@@ -22,16 +22,17 @@ export function annotateModels(models: ModelPrice[]): ModelPrice[] {
   const result = models.map(model => ({ ...model, isLatest: false, isFlagship: false, isPopular: false }))
   const families = new Map<string, typeof result>()
   for (const model of result) {
-    const { family, version } = parseModelVersion(model.model)
-    if (!version.length) continue
+    const { family } = parseModelVersion(model.model)
     const key = `${model.provider}:${family}`
     const group = families.get(key) ?? []
     group.push(model)
     families.set(key, group)
   }
   for (const group of families.values()) {
-    const newest = group.reduce((a, b) => compareVersions(parseModelVersion(a.model).version, parseModelVersion(b.model).version) >= 0 ? a : b)
-    const latest = group.filter(model => compareVersions(parseModelVersion(model.model).version, parseModelVersion(newest.model).version) === 0)
+    const versioned = group.filter(model => parseModelVersion(model.model).version.length > 0)
+    const candidates = versioned.length ? versioned : group
+    const newest = candidates.reduce((a, b) => compareVersions(parseModelVersion(a.model).version, parseModelVersion(b.model).version) >= 0 ? a : b)
+    const latest = candidates.filter(model => compareVersions(parseModelVersion(model.model).version, parseModelVersion(newest.model).version) === 0)
     latest.forEach(model => { model.isLatest = true })
     latest.sort((a, b) => b.outputPricePer1M - a.outputPricePer1M || a.model.localeCompare(b.model))
     latest[0].isFlagship = true

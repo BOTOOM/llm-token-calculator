@@ -1,5 +1,6 @@
 import type { ModelPrice } from './types'
 
+/** Extracts an ID-derived family and version tuple, keeping parameter sizes in the suffix. */
 export function parseModelVersion(id: string): { family: string; version: number[]; suffix: string } {
   const lowerId = id.toLowerCase()
   const size = lowerId.search(/(?:^|-)(?:a?\d+(?:\.\d+)?(?:x\d+(?:\.\d+)?)?b)(?=-|$)/)
@@ -10,6 +11,7 @@ export function parseModelVersion(id: string): { family: string; version: number
   return { family: match[1], version: match[2].split(/[.-]/).map(Number), suffix: [match[3].replace(/^-/, ''), sizeSuffix].filter(Boolean).join('-') }
 }
 
+/** Compares numeric version tuples, treating missing trailing segments as zero. */
 export function compareVersions(a: number[], b: number[]): number {
   for (let i = 0; i < Math.max(a.length, b.length); i++) {
     const difference = (a[i] ?? 0) - (b[i] ?? 0)
@@ -18,6 +20,7 @@ export function compareVersions(a: number[], b: number[]): number {
   return 0
 }
 
+/** Derives recency and price-based flags per provider/family without mutating the input. */
 export function annotateModels(models: ModelPrice[]): ModelPrice[] {
   const result = models.map(model => ({ ...model, isLatest: false, isFlagship: false, isPopular: false }))
   const families = new Map<string, typeof result>()
@@ -42,6 +45,7 @@ export function annotateModels(models: ModelPrice[]): ModelPrice[] {
   return result
 }
 
+/** Ranks providers by mirror demand, then catalogue size and name when scores tie. */
 export function rankProviders(models: ModelPrice[]): { provider: string; mirrorCount: number; modelCount: number }[] {
   const counts = new Map<string, { provider: string; mirrorCount: number; modelCount: number }>()
   for (const model of models) {
@@ -53,6 +57,7 @@ export function rankProviders(models: ModelPrice[]): { provider: string; mirrorC
   return [...counts.values()].sort((a, b) => b.mirrorCount - a.mirrorCount || b.modelCount - a.modelCount || a.provider.localeCompare(b.provider))
 }
 
+/** Selects the newest flagship from each of the highest-ranked eligible providers. */
 export function topProviderFlagships(models: ModelPrice[], limit = 3): ModelPrice[] {
   const providers = rankProviders(models).map(entry => entry.provider)
   return providers.flatMap(provider => {
@@ -62,6 +67,7 @@ export function topProviderFlagships(models: ModelPrice[], limit = 3): ModelPric
   }).slice(0, limit)
 }
 
+/** Seeds comparison keys from provider flagships, falling back to available models. */
 export function pickDefaults(models: ModelPrice[]): string[] {
   const key = (model: ModelPrice) => `${model.provider}:${model.model}`
   const seeded = topProviderFlagships(models).map(key)
@@ -75,6 +81,7 @@ export function pickDefaults(models: ModelPrice[]): string[] {
   return seeded.slice(0, 3)
 }
 
+/** Builds the supporting-model badge from ranked flagships, with an empty-data message. */
 export function heroBadgeText(models: ModelPrice[]): string {
   const names = topProviderFlagships(models).map(model => model.displayName)
   return names.length ? `Now supporting ${names.join(', ')} & more` : 'Explore live model pricing'

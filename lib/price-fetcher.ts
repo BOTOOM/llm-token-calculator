@@ -277,6 +277,7 @@ function score(m: ModelPrice): number {
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
+/** Returns cached live prices with derived metadata, or the bundled fallback on upstream failure. */
 export async function getModelPrices(): Promise<{ models: ModelPrice[]; source: string }> {
   const now = Date.now()
 
